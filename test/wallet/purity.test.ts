@@ -1,11 +1,13 @@
 /**
- * Purity gate for the wallet core (design §3.2, DR-03, SR-10/SR-12/SR-21).
+ * Purity gate for the wallet boundary (design §3.2, DR-03, DR-04,
+ * SR-10/SR-12/SR-21).
  *
- * The wallet modules are the part of the extension that touches secrets. They
- * must stay a pure library: no browser globals, no network, no logging, no
- * signing, no storage key literals (keys are injected), and no second crypto
- * implementation. A future edit that adds `fetch` to the vault or imports
- * `viem/accounts` fails here before a review has to notice it.
+ * `@limccn/longstone-wallet` is the only implementation of the crypto, the
+ * `wallet.v1` format, BIP-39/BIP-32 derivation and the vault lifecycle. This
+ * extension keeps exactly one host-specific module here — the self-write
+ * change guard — and the tests below fail if a second copy of the wallet core
+ * grows back, or if the remaining module picks up a browser/network/logging
+ * API. The UI rules stay: presentation code may not reach storage directly.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -56,13 +58,33 @@ const FORBIDDEN_IN_CORE: Array<{ id: string; pattern: RegExp }> = [
   { id: 'inline-signing-rpc', pattern: /\b(?:eth_sendTransaction|eth_signTypedData)\b/ },
 ];
 
+/**
+ * A second wallet implementation: the KDF call, its domain tag, the record
+ * parser or the derivation library. Only the shared package may contain these.
+ */
+const SECOND_IMPLEMENTATION: Array<{ id: string; pattern: RegExp }> = [
+  { id: 'argon2id-call', pattern: /\bargon2id\s*\(/ },
+  { id: 'kdf-domain', pattern: /longstone\/wallet\.v1\/(?:kdf|enc)/ },
+  { id: 'record-format', pattern: /longstone\.wallet\.v1/ },
+  { id: 'format-constant', pattern: /\bWALLET_FORMAT(?:_DOMAIN)?\b/ },
+  { id: 'kdf-domain-constant', pattern: /\bWALLET_KDF_DOMAIN\b|\bWALLET_HKDF_INFO\b/ },
+  { id: 'vault-key-derivation', pattern: /\b(?:deriveVaultKey|deriveKdfOutput|hkdfSha256)\b/ },
+  { id: 'record-parser', pattern: /\b(?:parseWalletRecord|validateVaultPayload)\b/ },
+  { id: 'noble-curves-import', pattern: /from\s+['"]@noble\/curves/ },
+  { id: 'noble-hashes-import', pattern: /from\s+['"]@noble\/hashes/ },
+  { id: 'scure-bip32-import', pattern: /from\s+['"]@scure\/bip32/ },
+  { id: 'scure-bip39-import', pattern: /from\s+['"]@scure\/bip39/ },
+  { id: 'hash-wasm-import', pattern: /from\s+['"]hash-wasm['"]/ },
+  { id: 'viem-accounts', pattern: /from\s+['"]viem\/accounts['"]/ },
+  { id: 'relative-core-import', pattern: /lib\/wallet\/(?:errors|crypto|format|accounts|password|vault|lock)\.js/ },
+];
+
 describe('wallet core stays pure', () => {
-  it('includes the expected modules', () => {
-    // A missing directory would make every rule vacuous.
-    expect(walletSources.length).toBeGreaterThanOrEqual(7);
-    for (const name of ['errors.ts', 'crypto.ts', 'format.ts', 'accounts.ts', 'password.ts', 'vault.ts', 'lock.ts']) {
-      expect(walletSources.map((file) => path.basename(file))).toContain(name);
-    }
+  it('keeps only the host-specific change guard in the app', () => {
+    // A missing directory would make every rule vacuous. The seven shared
+    // modules must live in @limccn/longstone-wallet, never here.
+    const names = walletSources.map((file) => path.basename(file));
+    expect(names).toEqual(['changeGuard.ts']);
   });
 
   it('touches no browser, network, logging, or signing API', () => {
@@ -75,8 +97,8 @@ describe('wallet core stays pure', () => {
     }
   });
 
-  it('imports only the audited crypto and sibling modules', () => {
-    const allowed = [/^\./, /^@noble\//, /^@scure\//, /^hash-wasm$/];
+  it('imports only relative modules and the shared wallet package', () => {
+    const allowed = [/^\./, /^@limccn\/longstone-wallet$/];
     for (const file of walletSources) {
       const text = stripComments(readFileSync(file, 'utf8'));
       const specifiers = [...text.matchAll(/from\s+['"]([^'"]+)['"]/g)].map((match) => match[1]);
@@ -88,6 +110,28 @@ describe('wallet core stays pure', () => {
       }
       expect(text).not.toMatch(/\bimport\s*\(/);
     }
+  });
+});
+
+describe('no second wallet implementation', () => {
+  it('has no Argon2id, HKDF, AES envelope, record parser or derivation copy', () => {
+    expect(allSources.length).toBeGreaterThan(0);
+    for (const file of allSources) {
+      const text = stripComments(readFileSync(file, 'utf8'));
+      for (const rule of SECOND_IMPLEMENTATION) {
+        expect(
+          rule.pattern.test(text),
+          `${path.relative(ROOT, file)}: ${rule.id}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it('depends on the shared package by workspace link', () => {
+    const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+    };
+    expect(pkg.dependencies?.['@limccn/longstone-wallet']).toBe('workspace:*');
   });
 });
 

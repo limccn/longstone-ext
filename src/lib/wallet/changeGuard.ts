@@ -3,10 +3,12 @@
  *
  * Chromium notifies the writer too, so a vault that saved one second ago would
  * otherwise classify its own write as "another window" and lock. This module
- * is deliberately separate from the vault and imports nothing, so the storage
- * adapter can use it without pulling Argon2id or the account code into pages
- * that never touch a wallet (the options page).
+ * is host-specific and imports only the shared core's deterministic
+ * serializer; the package is side-effect free, so the options page (which
+ * never touches a wallet) tree-shakes the KDF and account code away.
  */
+import { stableStringify } from '@limccn/longstone-wallet';
+
 export interface WalletChangeGuard {
   noteWrite(key: string, value: unknown): void;
   noteRemove(key: string): void;
@@ -14,22 +16,6 @@ export interface WalletChangeGuard {
 }
 
 const REMOVED = Symbol('removed');
-
-/** Deterministic JSON: object keys sorted, so a reordered write hashes the same. */
-export function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value) ?? 'undefined';
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
-  }
-  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
-    a < b ? -1 : a > b ? 1 : 0,
-  );
-  return `{${entries
-    .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
-    .join(',')}}`;
-}
 
 export function createWalletChangeGuard(_keys: unknown): WalletChangeGuard {
   const recorded = new Map<string, string | typeof REMOVED>();

@@ -18,7 +18,7 @@ import type { PermissionsApi } from './permissions.js';
 import {
   createWalletChangeGuard,
 } from './wallet/changeGuard.js';
-import type { StorageKeys, WalletStorage } from './wallet/vault.js';
+import type { StorageKeys, WalletStorage } from '@limccn/longstone-wallet';
 
 export const storageArea: KeyValueArea = {
   async get(key) {

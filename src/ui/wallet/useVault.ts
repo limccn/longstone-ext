@@ -14,8 +14,11 @@ import {
 } from '../../lib/chromeApi.js';
 import {
   DEFAULT_IDLE_TIMEOUT_MS,
+  WalletError,
   addAccount as addAccountOp,
   changePassword as changePasswordOp,
+  createEpochGate,
+  createLockController,
   createVault,
   deleteAccount as deleteAccountOp,
   loadVault,
@@ -27,6 +30,9 @@ import {
   type ChangePasswordInput,
   type ChangePasswordResult,
   type DeleteOutcome,
+  type EpochGate,
+  type LockController,
+  type LockReason,
   type NewAccountInput,
   type UnlockedVault,
   type UnlockOutcome,
@@ -35,15 +41,7 @@ import {
   type VaultLoad,
   type VaultPayload,
   type VaultResult,
-} from '../../lib/wallet/vault.js';
-import { WalletError } from '../../lib/wallet/errors.js';
-import {
-  createEpochGate,
-  createLockController,
-  type EpochGate,
-  type LockController,
-  type LockReason,
-} from '../../lib/wallet/lock.js';
+} from '@limccn/longstone-wallet';
 
 export type WalletPhase = 'loading' | 'NO_VAULT' | 'LOCKED' | 'CORRUPT' | 'UNLOCKED';
 

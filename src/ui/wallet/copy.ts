@@ -6,9 +6,11 @@
  * fixed by `ux-flows.md` §11 — unlock, export and change-password failures stay
  * indistinguishable on purpose.
  */
-import type { WalletError } from '../../lib/wallet/errors.js';
-import type { AccountSource } from '../../lib/wallet/format.js';
-import type { PasswordValidation } from '../../lib/wallet/password.js';
+import type {
+  AccountSource,
+  PasswordValidation,
+  WalletError,
+} from '@limccn/longstone-wallet';
 
 export const UNLOCK_FAILURE_COPY = 'Wrong password, or the vault data is damaged.';
 

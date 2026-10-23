@@ -11,13 +11,15 @@ concurrency:
   cancel-in-progress: true
 
 # This repo is one package of the MemoryOverEth pnpm workspace and depends on
-# `@limccn/longstone-surface` and `@limccn/menhir-core` through `workspace:*`.
+# `@limccn/longstone-surface`, `@limccn/longstone-wallet` and
+# `@limccn/menhir-core` through `workspace:*`.
 # CI assembles the same layout the developer checkout uses:
 #
 #   workspace/
 #   ├── pnpm-workspace.yaml / package.json
 #   ├── menhir/                 (sibling repo; @limccn/menhir-core in menhir/ts)
 #   ├── longstone-surface/      (sibling repo; @limccn/longstone-surface)
+#   ├── longstone-wallet/       (sibling repo; @limccn/longstone-wallet)
 #   └── app/                    (this repo)
 #
 # The sibling repos are public; the workflow token can read them.
@@ -45,13 +47,20 @@ jobs:
           token: ${{ github.token }}
           path: workspace/longstone-surface
 
+      - name: Checkout longstone-wallet (@limccn/longstone-wallet)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone-wallet
+          token: ${{ github.token }}
+          path: workspace/longstone-wallet
+
       - name: Assemble workspace
         working-directory: workspace
         run: |
           # Only the packages this extension actually resolves are listed.
           # menhir/contracts is absent: the extension consumes the TypeScript
           # core, not the Solidity project.
-          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "menhir/ts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
+          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "longstone-wallet"\n  - "menhir/ts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
           # No repo is checked out at the workspace root, so pnpm/action-setup
           # needs a manifest here to read `packageManager`.
           printf '{"name":"ci-workspace","private":true,"packageManager":"pnpm@12.11.2"}\n' > package.json
@@ -60,7 +69,7 @@ jobs:
         with:
           package_json_file: workspace/package.json
 
-      # No lockfile is committed in any of the three repos; caching is disabled
+      # No lockfile is committed in any of the four repos; caching is disabled
       # because there is no pnpm-lock.yaml at the assembled workspace root.
       - uses: actions/setup-node@v4
         with:
@@ -87,6 +96,17 @@ jobs:
       - name: Test @limccn/longstone-surface
         working-directory: workspace
         run: pnpm --dir longstone-surface test
+
+      # The wallet core is consumed through its `dist` build. Its tests run in
+      # this job as well: the browser and VS Code surfaces share the core, so
+      # a shared-core regression fails both CIs.
+      - name: Build @limccn/longstone-wallet
+        working-directory: workspace
+        run: pnpm --filter @limccn/longstone-wallet build
+
+      - name: Test @limccn/longstone-wallet
+        working-directory: workspace
+        run: pnpm --filter @limccn/longstone-wallet test
 
       - name: Typecheck extension
         working-directory: workspace
@@ -149,12 +169,19 @@ jobs:
           token: ${{ github.token }}
           path: workspace/longstone-surface
 
+      - name: Checkout longstone-wallet (@limccn/longstone-wallet)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone-wallet
+          token: ${{ github.token }}
+          path: workspace/longstone-wallet
+
       - name: Assemble workspace
         working-directory: workspace
         run: |
           # `menhir/contracts` is included here (not in `verify`): the e2e
           # orchestrator runs `hardhat node` from that package.
-          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "menhir/ts"\n  - "menhir/contracts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
+          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "longstone-wallet"\n  - "menhir/ts"\n  - "menhir/contracts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
           printf '{"name":"ci-workspace","private":true,"packageManager":"pnpm@12.11.2"}\n' > package.json
 
       - uses: pnpm/action-setup@v4
@@ -176,6 +203,10 @@ jobs:
       - name: Build @limccn/longstone-surface
         working-directory: workspace
         run: pnpm --filter @limccn/longstone-surface build
+
+      - name: Build @limccn/longstone-wallet
+        working-directory: workspace
+        run: pnpm --filter @limccn/longstone-wallet build
 
       - name: Build @limccn/menhir-contracts
         working-directory: workspace

@@ -41,18 +41,17 @@
   },
   "dependencies": {
     "@limccn/longstone-surface": "workspace:*",
+    "@limccn/longstone-wallet": "workspace:*",
     "@limccn/menhir-core": "workspace:*",
-    "@noble/curves": "1.9.1",
-    "@noble/hashes": "1.8.0",
-    "@scure/bip32": "1.7.0",
-    "@scure/bip39": "1.6.0",
-    "hash-wasm": "4.12.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "viem": "2.57.7"
   },
   "devDependencies": {
+    "@noble/hashes": "1.8.0",
     "@playwright/test": "1.64.1",
+    "@scure/bip32": "1.7.0",
+    "@scure/bip39": "1.6.0",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

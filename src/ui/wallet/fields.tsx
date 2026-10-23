@@ -16,7 +16,7 @@ import {
   passwordStrength,
   validateNewPassword,
   type PasswordValidation,
-} from '../../lib/wallet/password.js';
+} from '@limccn/longstone-wallet';
 import {
   NO_RECOVERY_COPY,
   PASSWORD_RULES_COPY,

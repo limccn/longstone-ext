@@ -51,7 +51,10 @@ shown as a tombstone (`deep` but not `active`), not a deletion.
 ## Wallet vault: what is stored, and where
 
 The vault is a single encrypted record in `chrome.storage.local` plus an
-optional one-time pending record used by password rotation:
+optional one-time pending record used by password rotation. The crypto, record
+format, derivation and vault lifecycle come from
+`@limccn/longstone-wallet`; this extension supplies only the storage adapter
+and the self-write guard:
 
 - Password input is NFC-normalised, tagged with `longstone/wallet.v1/kdf\0`, and
   stretched with **Argon2id** (Whitelisted parameters only; creation starts at
@@ -325,9 +328,10 @@ regress silently:
 - scan-window and cache-invalidation rules;
 - manifest policy, source-tree signing/wallet checks, and — when `.output/`
   exists — the built manifests for both browsers;
-- the wallet core: Argon2id vectors, envelope parsing, payload invariants,
-  password rotation, lock lifecycle, KDF whitelist, and the `src`/`ui` purity
-  gate (no network or console calls in wallet modules).
+- the host-side wallet guard and the `src`/`ui` purity gate (no network,
+  console, derivation library or second crypto implementation in the app);
+  the core's Argon2id vectors, envelope, payload and password-rotation tests
+  live in `@limccn/longstone-wallet`.
 
 `test/e2e/*.spec.ts` (Playwright) load the built extension and exercise:
 
@@ -353,8 +357,8 @@ entrypoints/
 src/
   lib/             manifest policy, settings, deep links, permissions,
                    chain window, scan orchestration, cache, chrome adapter
-  lib/wallet/      browser-free vault core: crypto, accounts, password,
-                   format/invariants, lock controller, change guard
+  lib/wallet/      host-specific self-write guard; the vault core lives in
+                   @limccn/longstone-wallet
   ui/              React views (timeline, detail, verify, settings)
   ui/wallet/       wallet views, forms, dialogs, copy, rate limiting
 scripts/
@@ -390,8 +394,9 @@ module takes an injected seam, which is why the unit tests need no browser.
 
 - **Testnet only.** Base Sepolia is a test chain; treat everything as
   throwaway.
-- **No signing.** The wallet is a local identity vault for exports and for the
-  eventual shared core. Transaction signing is a separate security review.
+- **No signing.** The wallet is a local identity vault for exports, backed by
+  the shared `@limccn/longstone-wallet` core. Transaction signing is a separate
+  security review.
 - **No password recovery.** Forgetting the password means the local vault is
   unrecoverable. Export first if you need a backup.
 - **Not published.** Draft store materials live under [`store/`](store/); no
@@ -406,10 +411,11 @@ module takes an injected seam, which is why the unit tests need no browser.
 - **Bounded scan window.** Older history requires an explicit start block or
   the web app. A wide window (say, 370k blocks) is correct but slow against a
   capped public RPC; the default 50k window is the practical setting.
-- **Cross-surface extraction is deferred.** The VS Code wallet is an
-  independent task, `longstone-vscode-wallet-vault`. Its Phase 0 will extract
-  `src/lib/wallet` into `@limccn/longstone-wallet`; this task keeps the core
-  internal and does not copy it into another repository (DR-04).
+- **Cross-surface extraction.** The wallet core lives in
+  `@limccn/longstone-wallet` (extracted in Phase 0 of
+  `longstone-vscode-wallet-vault`). This extension consumes it through
+  `workspace:*` and keeps only the host-specific write guard; it does not copy
+  the core into another repository (DR-04).
 
 ## Store submission (draft)
 
@@ -427,8 +433,9 @@ Submission is an owner action; nothing has been submitted.
   owner supplies the icon, screenshots, hosted policy URL, and contact.
 - Local signing, if approved by a new security review. Until then, wallet write
   actions remain deep links to the web app.
-- Shared wallet core (`@limccn/longstone-wallet`) with the VS Code task; keep
-  one implementation and one audited envelope.
+- VS Code wallet surface on the shared `@limccn/longstone-wallet` core
+  (extraction done in Phase 0); keep one implementation and one audited
+  envelope.
 - Multi-chain configuration (chain id + per-chain registry), with validation
   tied to the RPC's reported `eth_chainId`.
 - Firefox (`sidebar_action`) if the surface is wanted; requires a separate

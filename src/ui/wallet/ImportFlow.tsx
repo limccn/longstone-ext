@@ -11,8 +11,9 @@ import {
   deriveAccountFromMnemonic,
   parseMnemonicInput,
   parsePrivateKeyInput,
-} from '../../lib/wallet/accounts.js';
-import type { AccountSource, VaultSecret } from '../../lib/wallet/format.js';
+  type AccountSource,
+  type VaultSecret,
+} from '@limccn/longstone-wallet';
 import { walletErrorCopy } from './copy.js';
 import { copyText } from './clipboard.js';
 import { NewPasswordForm, PasswordInput } from './fields.js';

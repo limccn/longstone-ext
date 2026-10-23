@@ -4,7 +4,7 @@
  * record; before that, leaving the flow drops it with the component.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { generateWalletMnemonic } from '../../lib/wallet/accounts.js';
+import { generateWalletMnemonic } from '@limccn/longstone-wallet';
 import { walletErrorCopy, NO_RECOVERY_COPY, TESTNET_COPY } from './copy.js';
 import { copyText } from './clipboard.js';
 import { NewPasswordForm } from './fields.js';

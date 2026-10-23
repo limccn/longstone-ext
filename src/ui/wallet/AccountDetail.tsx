@@ -5,8 +5,7 @@
  * password check.
  */
 import { useState } from 'react';
-import { DERIVATION_PATH } from '../../lib/wallet/accounts.js';
-import type { VaultAccount } from '../../lib/wallet/format.js';
+import { DERIVATION_PATH, type VaultAccount } from '@limccn/longstone-wallet';
 import { sourceLabel } from './copy.js';
 import { copyText } from './clipboard.js';
 import { ExportDialog, type ExportKind } from './ExportDialog.js';

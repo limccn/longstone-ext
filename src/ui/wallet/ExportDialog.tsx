@@ -6,8 +6,11 @@
  * after 60 seconds or a hidden panel, and is dropped when the dialog unmounts.
  */
 import { useCallback, useState } from 'react';
-import { deriveAccountFromMnemonic, DERIVATION_PATH } from '../../lib/wallet/accounts.js';
-import type { VaultAccount } from '../../lib/wallet/format.js';
+import {
+  deriveAccountFromMnemonic,
+  DERIVATION_PATH,
+  type VaultAccount,
+} from '@limccn/longstone-wallet';
 import { UNLOCK_FAILURE_COPY, walletErrorCopy } from './copy.js';
 import { copyText } from './clipboard.js';
 import { Dialog, PasswordInput } from './fields.js';

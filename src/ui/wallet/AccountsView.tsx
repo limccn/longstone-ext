@@ -5,7 +5,7 @@
  * whole record (DR-06), which is why that path needs its own checkbox.
  */
 import { useState } from 'react';
-import { DEFAULT_IDLE_TIMEOUT_MS, type VaultAccount } from '../../lib/wallet/vault.js';
+import { DEFAULT_IDLE_TIMEOUT_MS, type VaultAccount } from '@limccn/longstone-wallet';
 import { shortAddress } from '../format.js';
 import { AccountDetail } from './AccountDetail.js';
 import { ChangePasswordView } from './ChangePasswordView.js';
