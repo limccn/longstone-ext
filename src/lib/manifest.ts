@@ -51,8 +51,8 @@ export const manifest: UserManifest = {
   name: 'longstone memory viewer',
   short_name: 'longstone',
   description:
-    'Read-only viewer for MemoryOverEth: browse and verify on-chain agent memory. Writes open in the web app, where your wallet signs.',
-  version: '0.1.1',
+    'Browse MemoryOverEth memories, verify content, and keep an encrypted local wallet. v1 does not sign; writes open in the web app.',
+  version: '0.2.0',
   // Minimum Chrome/Edge version that supports chrome.sidePanel (Chrome 114,
   // Edge 114). Declared so an old browser refuses the install instead of
   // showing a broken button.
@@ -61,10 +61,14 @@ export const manifest: UserManifest = {
   // Optional, per-origin, requested from a user gesture when a setting is
   // saved (PS-7). Deliberately NOT `host_permissions`.
   optional_host_permissions: ['https://*/*', 'http://localhost/*', 'http://127.0.0.1/*'],
-  // Extension pages run under the MV3 extension-page CSP. Declaring it
-  // explicitly documents the absence of `unsafe-eval` and remote scripts.
+  // Extension pages run under the MV3 extension-page CSP. `'wasm-unsafe-eval'`
+  // is required by the wallet vault: Argon2id runs from hash-wasm's
+  // base64-inlined wasm (design §4.1/§7.1). Chrome MV3 explicitly allows this
+  // token; `'unsafe-eval'` stays forbidden and is rejected at install time.
+  // Declaring the policy explicitly documents both the wasm permission and the
+  // absence of `'unsafe-eval'`/remote scripts.
   content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'self'",
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
   },
   action: {
     default_title: 'longstone memory viewer',

@@ -121,3 +121,82 @@ jobs:
             workspace/app/.output/chrome-mv3
             workspace/app/.output/edge-mv3
           if-no-files-found: error
+
+  # AC-13: load the built extension in Chromium and run the Playwright suite
+  # against a real local Hardhat node (chain-id 84532). The workspace assembly
+  # mirrors `verify`; menhir/contracts joins it because `scripts/e2e.mjs`
+  # starts `hardhat node` from there (read-only: no menhir source changes).
+  e2e:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout longstone-ext
+        uses: actions/checkout@v4
+        with:
+          path: workspace/app
+
+      - name: Checkout menhir (@limccn/menhir-core + contracts)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/menhir
+          token: ${{ secrets.WORKSPACE_REPO_TOKEN || secrets.MENHIR_REPO_TOKEN || github.token }}
+          path: workspace/menhir
+
+      - name: Checkout longstone-surface (@limccn/longstone-surface)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone-surface
+          token: ${{ github.token }}
+          path: workspace/longstone-surface
+
+      - name: Assemble workspace
+        working-directory: workspace
+        run: |
+          # `menhir/contracts` is included here (not in `verify`): the e2e
+          # orchestrator runs `hardhat node` from that package.
+          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "menhir/ts"\n  - "menhir/contracts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
+          printf '{"name":"ci-workspace","private":true,"packageManager":"pnpm@12.11.2"}\n' > package.json
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: workspace/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install
+        working-directory: workspace
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build @limccn/menhir-core
+        working-directory: workspace
+        run: pnpm --filter @limccn/menhir-core build
+
+      - name: Build @limccn/longstone-surface
+        working-directory: workspace
+        run: pnpm --filter @limccn/longstone-surface build
+
+      - name: Build @limccn/menhir-contracts
+        working-directory: workspace
+        run: pnpm --filter @limccn/menhir-contracts build
+
+      - name: Build chrome
+        working-directory: workspace
+        run: pnpm --dir app build:chrome
+
+      - name: Install Playwright Chromium
+        working-directory: workspace
+        run: pnpm --dir app exec playwright install --with-deps chromium
+
+      - name: Run extension e2e
+        working-directory: workspace/app
+        run: node scripts/e2e.mjs --skip-build
+
+      - name: Upload Playwright failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-e2e-results
+          path: workspace/app/test-results
+          if-no-files-found: ignore

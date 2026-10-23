@@ -5,8 +5,8 @@ Effective date: TODO (set when the policy is published).
 Contact: [TODO: replace with the owner's support/security contact before publication]
 
 This policy covers the `longstone memory viewer` browser extension
-(`longstone-ext`, version 0.1.1). It is a **read-only** viewer for
-MemoryOverEth memories on the Base Sepolia test network.
+(`longstone-ext`, version 0.2.0). It is a MemoryOverEth viewer with a local,
+encrypted wallet for the Base Sepolia test network.
 
 ## Summary
 
@@ -14,12 +14,16 @@ MemoryOverEth memories on the Base Sepolia test network.
 - No telemetry, analytics, crash reporting, advertising, or tracking.
 - No collection, sale, sharing, or transfer of personal data by the extension
   or its developer.
-- No wallet connection, private keys, seed phrases, or wallet data. The
-  extension never asks for a key and has no field that could accept one.
+- The local wallet stores keys only in encrypted form on your machine. The
+  password, recovery phrases, and private keys are never uploaded, and the
+  extension sends no wallet data anywhere.
+- There is no password recovery. Losing the password means the encrypted vault
+  cannot be opened.
 - No remote code. All JavaScript and CSS is bundled in the package; the
-  extension-page CSP is `script-src 'self'; object-src 'self'`. The build audit
-  rejects eval/Function, remote script tags, wallet signing entry points, and
-  off-allowlist 64-hex literals.
+  extension-page CSP is `script-src 'self' 'wasm-unsafe-eval'; object-src
+  'self'` (the wasm token is required by the inlined Argon2id implementation).
+  The build audit rejects eval/Function, remote script tags, wallet signing
+  entry points, and off-allowlist 64-hex literals.
 
 ## Data the extension reads and where it goes
 
@@ -29,6 +33,10 @@ Settings. When you verify a memory, it may fetch content bytes from the IPFS
 gateway and/or hisaishi gateway configured in Settings. The extension ships
 with default public endpoints (listed in the README); every endpoint is
 editable.
+
+Wallet operations are entirely local: key generation, import, address
+derivation, encryption, decryption, and export run in the side panel and do not
+make network requests.
 
 Network requests go only to:
 
@@ -50,15 +58,28 @@ Settings (RPC URL, registry address, gateway URLs, an optional default owner,
 and scan-window settings) are stored in `chrome.storage.local` on your machine.
 The extension also caches the scanned registry window there (public event
 metadata such as commitment hashes, owners, tags, and block numbers) so a
-closed side panel can resume. This data is not synced to your browser account
-and is not uploaded anywhere. It remains until you clear the extension's
-storage or uninstall the extension. The extension does not store memory
-content bytes, keys, or wallet data.
+closed side panel can resume.
+
+The wallet is stored in `chrome.storage.local` as a single encrypted record
+(plus an optional short-lived record used during password rotation). The
+record contains the Argon2id salt and parameters, an AES-GCM IV, and the
+encrypted payload; the password, recovery phrase, private keys, account labels,
+and account list are inside the ciphertext. The password is never stored. The
+decrypted payload and the AES key exist only in the side panel's page memory
+while unlocked, and are dropped when the panel locks (closing or hiding the
+panel, a lock button, or the optional idle timeout).
+
+This data is not synced to your browser account and is not uploaded anywhere.
+It remains until you clear the extension's storage or uninstall the extension.
+Resetting the wallet deletes the encrypted record; it cannot be recovered
+without the password or an exported recovery phrase/private key. The extension
+does not store memory content bytes.
 
 ## Permissions
 
 - `sidePanel` — shows the extension's primary UI in the browser side panel.
-- `storage` — stores the local settings and scan cache described above.
+- `storage` — stores the local settings, scan cache, and encrypted wallet
+  record described above.
 - Optional host permissions — requested only for the exact RPC/IPFS/hisaishi
   origins you save in Settings, from your Save click. The manifest's
   `https://*/*` entry is the ceiling that makes user-configured HTTPS
@@ -70,10 +91,17 @@ page. Denying it leaves the setting saved, but the endpoint may be unreadable.
 
 ## Wallet and write actions
 
-The extension does not connect a wallet, does not hold a key, and does not
-sign or send transactions. Buttons for retract, ACL/signers, and verify open
-`https://longstone-ui.pages.dev`; that web app is a separate site with its own
-privacy policy, and any wallet interaction there is performed by you.
+The wallet creates or imports a Base Sepolia identity locally. It does not
+sign transactions in this release and does not connect to a wallet provider.
+Retract, ACL/signers, and verify buttons open `https://longstone-ui.pages.dev`;
+that web app is a separate site with its own privacy policy, and any wallet
+interaction there is performed by you.
+
+Exporting a private key or recovery phrase requires re-entering the wallet
+password and an explicit reveal. The secret remains visible for at most 60
+seconds, until you hide it, or until the panel is hidden. The clipboard may
+retain a copy after you leave; that is your operating system's behaviour, not
+an upload by the extension.
 
 ## Changes and contact
 

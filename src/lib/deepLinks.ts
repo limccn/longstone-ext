@@ -1,7 +1,7 @@
 /**
  * Deep links to the web app (design §5.2, PS-8).
  *
- * The extension is read-only. Destructive actions (retract, ACL changes)
+ * The extension never signs. Destructive actions (retract, ACL changes)
  * happen in `longstone-ui`, where the user's wallet signs. This module builds
  * those links under three invariants:
  *

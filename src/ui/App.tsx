@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UiError, verifyCommitment, type ChainIndex } from '@limccn/longstone-surface';
 import { canonicalAddress, createClient, explainScanError } from '../lib/chain.js';
 import { scanIndex, type ScanProgress } from '../lib/scan.js';
@@ -17,8 +17,11 @@ import { TimelineView } from './TimelineView.js';
 import { DetailView } from './DetailView.js';
 import { VerifyView, type VerifyRunner } from './VerifyView.js';
 import { shortAddress, stringifyError } from './format.js';
+import { useVault } from './wallet/useVault.js';
+import { WalletView } from './wallet/WalletView.js';
+import { ownerSource, resolveOwner, type OwnerMode } from './wallet/owner.js';
 
-type Tab = 'timeline' | 'verify';
+type Tab = 'timeline' | 'verify' | 'wallet';
 
 export interface AppDeps {
   store: SettingsStore;
@@ -84,12 +87,22 @@ export function App({ deps }: { deps: AppDeps }) {
 }
 
 function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
+  const wallet = useVault();
   const [tab, setTab] = useState<Tab>('timeline');
-  const [ownerInput, setOwnerInput] = useState(settings.ownerAddress);
-  const initialOwner = validateAddress(settings.ownerAddress, { allowEmpty: true });
-  const [owner, setOwner] = useState<string | null>(
-    initialOwner.ok && initialOwner.value !== '' ? canonicalAddress(initialOwner.value) : null,
+
+  const settingsOwnerCheck = validateAddress(settings.ownerAddress, { allowEmpty: true });
+  const settingsOwner =
+    settingsOwnerCheck.ok && settingsOwnerCheck.value !== ''
+      ? canonicalAddress(settingsOwnerCheck.value)
+      : null;
+  const walletAddress = wallet.activeAccount?.address ?? null;
+  const [ownerMode, setOwnerMode] = useState<OwnerMode>(
+    settingsOwner === null ? 'wallet' : 'entered',
   );
+  const [enteredOwner, setEnteredOwner] = useState<string | null>(settingsOwner);
+  const [ownerInput, setOwnerInput] = useState(settings.ownerAddress);
+  const owner = resolveOwner(ownerMode, enteredOwner, walletAddress, settingsOwner);
+  const source = ownerSource(ownerMode, enteredOwner, walletAddress);
   const [ownerError, setOwnerError] = useState<string | null>(null);
   const [index, setIndex] = useState<ChainIndex | null>(null);
   const [scanWindow, setScanWindow] = useState<{ from: bigint; to: bigint } | null>(null);
@@ -98,6 +111,38 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [verifySeed, setVerifySeed] = useState<string | undefined>(undefined);
+  const defaultTabApplied = useRef(false);
+
+  // First run opens on Wallet; an existing (even locked) record keeps the old
+  // Timeline default. Only the first settled load decides.
+  useEffect(() => {
+    if (defaultTabApplied.current || wallet.phase === 'loading') return;
+    defaultTabApplied.current = true;
+    if (wallet.phase === 'NO_VAULT') setTab('wallet');
+  }, [wallet.phase]);
+
+  // In "wallet" mode the input mirrors the active address while unlocked and
+  // falls back to the Settings default (or empty) while locked. The address is
+  // never written back to Settings (SR-06).
+  useEffect(() => {
+    if (ownerMode !== 'wallet') return;
+    setOwnerInput(walletAddress ?? settings.ownerAddress);
+  }, [ownerMode, walletAddress, settings.ownerAddress]);
+
+  const walletStatusLabel =
+    wallet.phase === 'UNLOCKED'
+      ? 'Wallet unlocked'
+      : wallet.phase === 'NO_VAULT'
+        ? 'No wallet'
+        : wallet.phase === 'loading'
+          ? 'Checking wallet'
+          : 'Wallet locked';
+  const walletStatusState =
+    wallet.phase === 'UNLOCKED'
+      ? 'unlocked'
+      : wallet.phase === 'NO_VAULT'
+        ? 'none'
+        : 'locked';
 
   const configuredRegistry = settings.registryAddress;
 
@@ -152,13 +197,22 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
       return;
     }
     setOwnerError(null);
+    setOwnerMode('entered');
     if (check.value === '') {
-      setOwner(null);
+      setEnteredOwner(null);
       setIndex(null);
+      setScanWindow(null);
+      setScanError(null);
       return;
     }
-    const canonical = canonicalAddress(check.value);
-    setOwner((previous) => (previous === canonical ? previous : canonical));
+    setEnteredOwner(canonicalAddress(check.value));
+  }
+
+  function useWalletAddress(): void {
+    if (walletAddress === null) return;
+    setOwnerError(null);
+    setOwnerMode('wallet');
+    setOwnerInput(walletAddress);
   }
 
   const verifyRunner = useMemo<VerifyRunner>(
@@ -191,11 +245,49 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
           >
             Verify
           </button>
+          <button
+            type="button"
+            className={tab === 'wallet' ? 'nav-link on' : 'nav-link'}
+            data-testid="wallet-tab"
+            onClick={() => setTab('wallet')}
+          >
+            Wallet{' '}
+            <span
+              className={`wallet-dot ${walletStatusState}`}
+              data-testid="wallet-status"
+              role="img"
+              aria-label={walletStatusLabel}
+            />
+          </button>
         </nav>
+        {wallet.phase === 'UNLOCKED' && (
+          <button
+            type="button"
+            className="link-button"
+            data-testid="wallet-lock-global"
+            onClick={() => wallet.lock('explicit')}
+          >
+            Lock
+          </button>
+        )}
         <button type="button" className="link-button" onClick={deps.openOptions}>
           Settings
         </button>
       </header>
+
+      {wallet.notice !== null && (
+        <div className="wallet-notice" role="status">
+          <span>{wallet.notice}</span>
+          <button
+            type="button"
+            className="link-button"
+            onClick={wallet.dismissNotice}
+            aria-label="Dismiss notification"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="panel-body">
         {configuredRegistry === '' && (
@@ -240,6 +332,21 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
                 </button>
               </div>
               {ownerError !== null && <p className="error">{ownerError}</p>}
+              {source !== null && (
+                <p className="hint small" data-testid="owner-source">
+                  Owner source: {source}
+                </p>
+              )}
+              {ownerMode === 'entered' && walletAddress !== null && (
+                <button
+                  type="button"
+                  className="link-button"
+                  data-testid="owner-use-wallet"
+                  onClick={useWalletAddress}
+                >
+                  Use wallet address
+                </button>
+              )}
               {owner !== null && (
                 <p className="hint">
                   Showing {shortAddress(owner)}{' '}
@@ -252,9 +359,9 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
 
             {owner === null && (
               <p className="empty" data-testid="no-owner">
-                Paste an owner address to see that owner&apos;s memories, or save a
-                default owner in Settings. This extension is read-only; it never
-                connects a wallet.
+                Paste an owner address to see that owner&apos;s memories, or save a default
+                owner in Settings. You can also create or import a local wallet to use its
+                active address.
               </p>
             )}
 
@@ -317,10 +424,15 @@ function Panel({ settings, deps }: { settings: Settings; deps: AppDeps }) {
             }
           />
         )}
+
+        {tab === 'wallet' && (
+          <WalletView wallet={wallet} onSkip={() => setTab('timeline')} />
+        )}
       </div>
 
       <footer className="app-footer">
-        Base Sepolia (84532) · read-only · no wallet, no key
+        Base Sepolia (84532) · local encrypted wallet (v1 does not sign) · closing the panel
+        locks it
       </footer>
     </main>
   );

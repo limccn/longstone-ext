@@ -74,6 +74,16 @@ const BANNED = [
     why: 'injected wallet API (extension is read-only)',
   },
   {
+    id: 'eth-send-transaction',
+    pattern: /\beth_sendTransaction\b/g,
+    why: 'transaction submission RPC method (v1 does not sign or send)',
+  },
+  {
+    id: 'eth-sign-typed-data',
+    pattern: /\beth_signTypedData\b/g,
+    why: 'typed-data signing RPC method (v1 does not sign)',
+  },
+  {
     id: 'longstone-key',
     pattern: /LONGSTONE_(?:OWNER_)?KEY/gi,
     why: 'key-material name in a distributed artifact (PS-1)',
@@ -136,6 +146,75 @@ async function exists(target) {
   }
 }
 
+/** Splits a CSP policy into directive name → source tokens. */
+function parseCsp(policy) {
+  const directives = new Map();
+  for (const part of policy.split(';')) {
+    const tokens = part.trim().split(/\s+/).filter((token) => token !== '');
+    if (tokens.length === 0) continue;
+    directives.set(tokens[0].toLowerCase(), tokens.slice(1));
+  }
+  return directives;
+}
+
+/**
+ * CSP tokens that execute code or inject markup. Compared as **whole tokens**:
+ * `'wasm-unsafe-eval'` is a different token from `'unsafe-eval'`, and a
+ * substring check would reject the wasm permission the vault needs (design
+ * §7.2). No rule may be relaxed to make a build pass.
+ */
+const FORBIDDEN_CSP_TOKENS = new Set(["'unsafe-eval'", "'unsafe-inline'"]);
+
+/** Remote/opaque sources a script or object directive must never carry. */
+function isRemoteCspSource(token) {
+  return /^(?:https?:|wss?:|data:|blob:|filesystem:|\*)/i.test(token);
+}
+
+/**
+ * Audits the manifest CSP token by token.
+ *
+ * `extension_pages` must allow wasm (`'wasm-unsafe-eval'`) because Argon2id is
+ * compiled from wasm, and must not allow `'unsafe-eval'`, `'unsafe-inline'`, or
+ * any remote source. Every policy in the map is checked for the forbidden
+ * tokens and remote sources.
+ */
+function auditCsp(csp, label, failures) {
+  if (typeof csp !== 'object' || csp === null) {
+    failures.push(`${label}: content_security_policy is missing`);
+    return;
+  }
+  for (const [key, policy] of Object.entries(csp)) {
+    if (typeof policy !== 'string') {
+      failures.push(`${label}: content_security_policy.${key} is not a string`);
+      continue;
+    }
+    const directives = parseCsp(policy);
+    for (const [directive, sources] of directives) {
+      for (const token of sources) {
+        if (FORBIDDEN_CSP_TOKENS.has(token.toLowerCase())) {
+          failures.push(`${label}: CSP ${key}/${directive} contains ${token}`);
+        }
+        if (isRemoteCspSource(token)) {
+          failures.push(`${label}: CSP ${key}/${directive} allows remote source ${token}`);
+        }
+      }
+    }
+    if (key === 'extension_pages') {
+      const script = directives.get('script-src') ?? [];
+      const object = directives.get('object-src') ?? [];
+      if (!script.includes("'self'")) {
+        failures.push(`${label}: CSP script-src must include 'self'`);
+      }
+      if (!script.includes("'wasm-unsafe-eval'")) {
+        failures.push(`${label}: CSP script-src must include 'wasm-unsafe-eval' (Argon2id wasm)`);
+      }
+      if (!object.includes("'self'") && !object.includes("'none'")) {
+        failures.push(`${label}: CSP object-src must be 'self' or 'none'`);
+      }
+    }
+  }
+}
+
 /** OWASP-style allowlist: required keys exactly, forbidden keys absent. */
 function auditManifest(manifest, label, failures) {
   if (manifest.manifest_version !== 3) {
@@ -181,10 +260,7 @@ function auditManifest(manifest, label, failures) {
     failures.push(`${label}: optional_host_permissions contains a broad pattern`);
   }
 
-  const csp = JSON.stringify(manifest.content_security_policy ?? {});
-  if (/unsafe-eval|unsafe-inline|https?:/.test(csp)) {
-    failures.push(`${label}: extension CSP widens beyond script-src 'self'`);
-  }
+  auditCsp(manifest.content_security_policy, label, failures);
 }
 
 const failures = [];

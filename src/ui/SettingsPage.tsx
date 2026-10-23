@@ -127,8 +127,9 @@ export function SettingsPage({ store, permissions }: SettingsPageProps) {
       <div className="panel-body">
         <p className="hint">
           Everything here lives in this browser (<code>chrome.storage.local</code>).
-          No account, no server, no wallet. The extension is read-only; writes open
-          in the web app where your wallet signs.
+          No account, no server, no telemetry. The local wallet is encrypted with a
+          password you choose and never leaves this browser; v0.2 does not sign, so
+          writes still open in the web app.
         </p>
 
         <div className="form">

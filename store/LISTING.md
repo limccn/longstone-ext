@@ -1,26 +1,26 @@
 # Store listing copy — longstone memory viewer (draft)
 
 Status: draft for Chrome Web Store and Microsoft Edge Add-ons. Not submitted.
-Version: 0.1.1 (tag `v0.1.1`; see [CHECKLIST.md](CHECKLIST.md)).
+Version: 0.2.0 (release tag `v0.2.0` when published; see
+[CHECKLIST.md](CHECKLIST.md)).
 Privacy policy: [PRIVACY.md](PRIVACY.md) (hosted URL still TODO).
 
 ## Single-purpose statement
 
-browse and cryptographically verify MemoryOverEth on-chain memories
+provide a local signing identity for the MemoryOverEth memory browser
 
 ## Short description
 
-Read-only viewer for MemoryOverEth: browse and verify on-chain agent memory.
-Writes open in the web app, where your wallet signs.
+Browse MemoryOverEth memories, verify content, and keep an encrypted local
+wallet. v1 does not sign; writes open in the web app.
 
 This is the manifest description; it fits Chrome's 132-character limit.
 
 ## Long description
 
-longstone memory viewer is a read-only Chrome/Edge side panel for
-MemoryOverEth, an on-chain long-term memory registry for AI agents. The
-current release targets the Base Sepolia test network (chain id 84532), and it
-never asks for an account, a wallet, or a key.
+longstone memory viewer is a Chrome/Edge side panel for MemoryOverEth, an
+on-chain long-term memory registry for AI agents. The current release targets
+the Base Sepolia test network (chain id 84532).
 
 Use it to:
 
@@ -33,19 +33,34 @@ Use it to:
   content is fetched from your configured gateway, and both digests are
   compared in the extension. A gateway that substitutes content cannot produce
   a `verified` result, and a CID alone is never presented as an on-chain
-  verification.
+  verification;
+- create or import a Base Sepolia identity in the local wallet, unlock it with
+  a password you choose, add or rename accounts, export an account's private
+  key or recovery phrase after re-entering the password, change the password,
+  or reset the vault.
 
-The extension is deliberately read-only. Retract and access-control/signers
-actions open `https://longstone-ui.pages.dev` in a new tab, where your wallet
-signs; the extension itself does not connect a wallet, hold a key, sign, or
-send transactions.
+The wallet is encrypted locally and never leaves the browser. The password is
+stretched with Argon2id and the payload is protected with AES-256-GCM; the
+decrypted key exists only in the side panel's memory. Closing or hiding the
+panel locks the wallet immediately, with an optional 15-minute idle lock while
+it stays open. There is no password recovery: if you forget the password, the
+local vault cannot be opened, so export your recovery material first if you
+need a backup.
+
+This release does **not sign transactions**. The wallet is a local identity
+vault; retract and access-control/signers actions still open
+`https://longstone-ui.pages.dev` in a new tab, where your wallet signs. The
+extension does not connect a wallet provider, expose `window.ethereum`, or send
+transactions.
 
 Settings (RPC, registry, IPFS gateway, optional hisaishi gateway, default
-owner, scan window) and the scan cache are stored in `chrome.storage.local` on
-your machine. There is no account, no telemetry, no analytics, and no remote
-code: all JavaScript and CSS is bundled, the extension-page CSP is
-`script-src 'self'`, and the build audit rejects remote scripts, eval, and
-wallet signing entry points.
+owner, scan window), the scan cache, and the encrypted wallet record are stored
+in `chrome.storage.local` on your machine. There is no account, no telemetry,
+no analytics, and no remote code: all JavaScript and CSS is bundled, the
+extension-page CSP is `script-src 'self' 'wasm-unsafe-eval'; object-src
+'self'` (the wasm token covers the inlined Argon2id implementation), and the
+build audit rejects remote scripts, eval, wallet signing entry points, and
+off-allowlist key material.
 
 Testnet only: Base Sepolia is a test chain; treat everything as throwaway.
 
@@ -56,8 +71,8 @@ before publication].
 
 | Permission | Justification |
 |---|---|
-| `sidePanel` | The primary user interface: the timeline, commitment detail, and verify views render in the browser side panel. It does not inject script into pages. |
-| `storage` | Stores your settings and the local scan cache in `chrome.storage.local`. Nothing is synced or uploaded. |
+| `sidePanel` | The primary user interface: timeline, commitment detail, verify, and the wallet render in the browser side panel. It does not inject script into pages. |
+| `storage` | Stores your settings, the local scan cache, and the encrypted wallet record in `chrome.storage.local`. The wallet password and decrypted keys are never stored or synced. |
 | `optional_host_permissions` | Lets the extension read the RPC, IPFS gateway, and hisaishi endpoints **you configure**. Only those exact origins are requested, at the moment you click Save, from a user gesture. `https://*/*` is the optional ceiling that makes arbitrary user-configured HTTPS endpoints possible; the runtime never requests `<all_urls>` or a wildcard host. The extension declares no `host_permissions`, `tabs`, `activeTab`, `scripting`, content scripts, or `web_accessible_resources`. |
 
 Host access is a reliability mechanism, not a data path: extension pages fetch
@@ -71,15 +86,17 @@ You can revoke access from the browser's extension details page.
   none.
 - It reads public on-chain data through the configured RPC endpoint and may
   fetch public content bytes from the configured IPFS/hisaishi gateway.
-- Settings and the scan cache stay in `chrome.storage.local`; they are not
-  synced to a browser account or uploaded by the extension.
+- Settings, the scan cache, and the encrypted wallet record stay in
+  `chrome.storage.local`; they are not synced to a browser account or uploaded
+  by the extension.
+- The wallet password, recovery phrases, and private keys are never sent over
+  the network. Keys exist in plaintext only in the side panel's memory after an
+  explicit unlock or reveal, and are dropped when the panel locks.
 - Network requests go only to the configured endpoints, the fixed web-app
   origin when you click a deep link, and the Base Sepolia block explorer when
   you open a transaction or contract link. Those third-party services see
   ordinary request metadata such as your IP address; the developer does not
   receive it.
-- The extension holds no private keys, seed phrases, or wallet data. Wallet
-  writes open the web app and are not performed by the extension.
 - No remote code is loaded or evaluated; all code ships in the package.
 
 ## Suggested listing metadata
@@ -89,4 +106,6 @@ You can revoke access from the browser's extension details page.
 - Test instructions for reviewers: load the unpacked build, leave the default
   Base Sepolia endpoints or set your own, save (approve the one host-access
   prompt for those origins), then paste an owner address that has commitments.
-  No account or wallet is needed. Wallet write buttons only open the web app.
+  No account is needed to browse. The Wallet tab can create a new testnet
+  wallet entirely offline; signing is not part of this release, and write
+  buttons only open the web app.

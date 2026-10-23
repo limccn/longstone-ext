@@ -15,6 +15,10 @@ import {
 } from './settings.js';
 import type { CacheArea } from './indexCache.js';
 import type { PermissionsApi } from './permissions.js';
+import {
+  createWalletChangeGuard,
+} from './wallet/changeGuard.js';
+import type { StorageKeys, WalletStorage } from './wallet/vault.js';
 
 export const storageArea: KeyValueArea = {
   async get(key) {
@@ -34,6 +38,67 @@ export const cacheArea: CacheArea = {
 };
 
 export const settingsStore: SettingsStore = createSettingsStore(storageArea);
+
+/**
+ * Wallet storage keys. These literals live here and nowhere else: the wallet
+ * core takes keys by injection, which keeps it browser-free and lets a stray
+ * key literal fail the purity gate.
+ */
+export const WALLET_STORAGE_KEYS: StorageKeys = {
+  record: 'longstone-ext.wallet.v1',
+  pending: 'longstone-ext.wallet.v1.pending',
+};
+
+/**
+ * Chromium delivers `storage.onChanged` to the writer as well as to other
+ * pages. The guard records each serialized value this instance is about to
+ * write, so the listener can ignore its own events; otherwise every save would
+ * lock the vault that just made it (DR-01).
+ */
+const walletChangeGuard = createWalletChangeGuard(WALLET_STORAGE_KEYS);
+
+export const walletStorage: WalletStorage = {
+  get: storageArea.get,
+  async set(items) {
+    for (const [key, value] of Object.entries(items)) {
+      walletChangeGuard.noteWrite(key, value);
+    }
+    await browser.storage.local.set(items);
+  },
+  async remove(key) {
+    walletChangeGuard.noteRemove(key);
+    await browser.storage.local.remove(key);
+  },
+};
+
+export interface WalletStorageChange {
+  key: string;
+  /** `undefined` means the key was removed. */
+  newValue: unknown;
+}
+
+/**
+ * Subscribes to wallet-record changes that did not originate in this page.
+ * The side panel locks on any external write and re-reads the record; an
+ * external delete simply becomes `NO_VAULT` after the reload.
+ */
+export function onWalletStorageChanged(
+  callback: (change: WalletStorageChange) => void,
+): () => void {
+  const listened: readonly string[] = [WALLET_STORAGE_KEYS.record, WALLET_STORAGE_KEYS.pending];
+  const listener = (changes: Record<string, unknown>, areaName: string): void => {
+    if (areaName !== 'local') return;
+    for (const key of listened) {
+      if (!(key in changes)) continue;
+      const raw = changes[key] as { newValue?: unknown } | undefined;
+      const newValue = raw?.newValue;
+      if (walletChangeGuard.classify(key, newValue) === 'self') continue;
+      callback({ key, newValue });
+    }
+  };
+  browser.storage.onChanged.addListener(listener);
+  return () => browser.storage.onChanged.removeListener(listener);
+}
 
 export const permissionsApi: PermissionsApi = {
   async contains(permissions) {

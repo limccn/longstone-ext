@@ -21,6 +21,19 @@ import {
 
 const ROOT = path.resolve(__dirname, '..');
 
+/** Splits a CSP policy into directive name → source tokens. */
+function cspSourceTokens(policy: string, directive: string): string[] {
+  for (const part of policy.split(';')) {
+    const tokens = part.trim().split(/\s+/).filter((token) => token !== '');
+    if (tokens.length > 0 && tokens[0]?.toLowerCase() === directive) return tokens.slice(1);
+  }
+  return [];
+}
+
+function cspTokens(policy: string): string[] {
+  return policy.split(/[;\s]+/).filter((token) => token !== '');
+}
+
 describe('declared manifest (source of truth)', () => {
   it('requires exactly sidePanel and storage, nothing else', () => {
     // MV3 is set by WXT (`manifestVersion: 3` in wxt.config.ts); declaring it
@@ -54,11 +67,20 @@ describe('declared manifest (source of truth)', () => {
     }
   });
 
-  it('pins an extension-page CSP without unsafe-eval or remote scripts', () => {
+  it('pins an extension-page CSP with wasm and without unsafe-eval or remote scripts', () => {
     const csp = manifest.content_security_policy?.extension_pages ?? '';
-    expect(csp).toContain("script-src 'self'");
-    expect(csp).not.toContain('unsafe-eval');
-    expect(csp).not.toContain('http');
+    const script = cspSourceTokens(csp, 'script-src');
+    // Token-level, not substring: `'wasm-unsafe-eval'` contains `'unsafe-eval'`
+    // as a substring but is a different, MV3-allowed keyword (design §7.2).
+    expect(script).toContain("'self'");
+    expect(script).toContain("'wasm-unsafe-eval'");
+    expect(script).not.toContain("'unsafe-eval'");
+    expect(script).not.toContain("'unsafe-inline'");
+    expect(cspSourceTokens(csp, 'object-src')).toEqual(["'self'"]);
+    const tokens = cspTokens(csp);
+    expect(tokens).not.toContain("'unsafe-eval'");
+    expect(tokens).not.toContain("'unsafe-inline'");
+    expect(tokens.filter((token) => /^(?:https?:|\*|data:)/i.test(token))).toEqual([]);
   });
 
   it('ships the sidepanel entrypoint that produces side_panel', () => {
@@ -105,6 +127,8 @@ describe.skipIf(builtManifests.length === 0)('built manifest', () => {
         expect.arrayContaining([...(manifest.optional_host_permissions ?? [])]),
       );
       expect(built['optional_host_permissions']).not.toContain('<all_urls>');
+      // Version is a release fact: the built manifest must track the source.
+      expect(built['version']).toBe(manifest.version);
     });
 
     it(`${name}: options page is registered and no remote script can load`, () => {
@@ -115,7 +139,16 @@ describe.skipIf(builtManifests.length === 0)('built manifest', () => {
       expect(existsSync(path.join(path.dirname(file), options?.page ?? ''))).toBe(true);
       const serialized = JSON.stringify(built);
       expect(serialized).not.toContain('<all_urls>');
-      expect(serialized).not.toContain('unsafe-eval');
+      // CSP is asserted as tokens: `'wasm-unsafe-eval'` is required for the
+      // Argon2id wasm, and its substring must not fail the gate.
+      const builtCsp =
+        (built['content_security_policy'] as { extension_pages?: string } | undefined)
+          ?.extension_pages ?? '';
+      const tokens = cspTokens(builtCsp);
+      expect(tokens).toContain("'wasm-unsafe-eval'");
+      expect(tokens).not.toContain("'unsafe-eval'");
+      expect(tokens).not.toContain("'unsafe-inline'");
+      expect(tokens.filter((token) => /^(?:https?:|\*|data:)/i.test(token))).toEqual([]);
     });
   }
 });
