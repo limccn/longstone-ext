@@ -1,6 +1,6 @@
 {
   "name": "@limccn/longstone-ext",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Read-only Chrome/Edge side panel for MemoryOverEth: timeline, commitment detail and chain-derived verification. Writes deep-link to the web app.",
   "license": "Apache-2.0",

@@ -1,7 +1,7 @@
 # Store listing copy — longstone memory viewer (draft)
 
 Status: draft for Chrome Web Store and Microsoft Edge Add-ons. Not submitted.
-Version: 0.1.0 (tag TODO; see [CHECKLIST.md](CHECKLIST.md)).
+Version: 0.1.1 (tag `v0.1.1`; see [CHECKLIST.md](CHECKLIST.md)).
 Privacy policy: [PRIVACY.md](PRIVACY.md) (hosted URL still TODO).
 
 ## Single-purpose statement

@@ -52,7 +52,7 @@ export const manifest: UserManifest = {
   short_name: 'longstone',
   description:
     'Read-only viewer for MemoryOverEth: browse and verify on-chain agent memory. Writes open in the web app, where your wallet signs.',
-  version: '0.1.0',
+  version: '0.1.1',
   // Minimum Chrome/Edge version that supports chrome.sidePanel (Chrome 114,
   // Edge 114). Declared so an old browser refuses the install instead of
   // showing a broken button.

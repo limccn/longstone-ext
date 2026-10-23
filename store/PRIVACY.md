@@ -5,7 +5,7 @@ Effective date: TODO (set when the policy is published).
 Contact: [TODO: replace with the owner's support/security contact before publication]
 
 This policy covers the `longstone memory viewer` browser extension
-(`longstone-ext`, version 0.1.0). It is a **read-only** viewer for
+(`longstone-ext`, version 0.1.1). It is a **read-only** viewer for
 MemoryOverEth memories on the Base Sepolia test network.
 
 ## Summary

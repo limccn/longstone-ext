@@ -6,14 +6,14 @@ account, fees, identity verification, a hosted privacy-policy URL, final
 screenshots/assets, and the owner's approval of the published listing. Nothing
 in this repository has been submitted.
 
-Current package: `@limccn/longstone-ext` 0.1.0 (manifest and package versions
+Current package: `@limccn/longstone-ext` 0.1.1 (manifest and package versions
 match). Zips are produced as:
 
-- `.output/limccnlongstone-ext-0.1.0-chrome.zip`
-- `.output/limccnlongstone-ext-0.1.0-edge.zip`
+- `.output/limccnlongstone-ext-0.1.1-chrome.zip`
+- `.output/limccnlongstone-ext-0.1.1-edge.zip`
 
-Version/tag: **0.1.0**; git tag `v0.1.0` is TODO. This local repository
-currently has no commits, so create the release commit/tag before submission.
+Version/tag: **0.1.1**; tag `v0.1.1` on the release commit. This version
+includes the CI and documentation fixes made after v0.1.0.
 
 ## Still TODO (assets and account material)
 
