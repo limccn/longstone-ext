@@ -1,0 +1,58 @@
+{
+  "name": "@limccn/longstone-ext",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only Chrome/Edge side panel for MemoryOverEth: timeline, commitment detail and chain-derived verification. Writes deep-link to the web app.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limccn/longstone-ext.git"
+  },
+  "homepage": "https://github.com/limccn/longstone-ext",
+  "bugs": {
+    "url": "https://github.com/limccn/longstone-ext/issues"
+  },
+  "keywords": [
+    "memory",
+    "ai-agent",
+    "chrome-extension",
+    "edge-extension",
+    "mv3",
+    "base-sepolia"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "wxt -b chrome",
+    "dev:edge": "wxt -b edge",
+    "build": "wxt build -b chrome && wxt build -b edge",
+    "build:chrome": "wxt build -b chrome",
+    "build:edge": "wxt build -b edge",
+    "zip": "wxt zip -b chrome && wxt zip -b edge",
+    "postinstall": "wxt prepare",
+    "typecheck": "wxt prepare && tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "audit": "node scripts/audit-extension.mjs",
+    "audit:dist": "node scripts/audit-extension.mjs --dir .output",
+    "check": "wxt prepare && tsc -p tsconfig.json --noEmit && vitest run && wxt build -b chrome && wxt build -b edge && node scripts/audit-extension.mjs"
+  },
+  "dependencies": {
+    "@limccn/longstone-surface": "workspace:*",
+    "@limccn/menhir-core": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "viem": "2.57.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@wxt-dev/module-react": "1.2.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5",
+    "wxt": "0.21.4"
+  }
+}

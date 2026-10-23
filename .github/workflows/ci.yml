@@ -1,0 +1,125 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# This repo is one package of the MemoryOverEth pnpm workspace and depends on
+# `@limccn/longstone-surface` and `@limccn/menhir-core` through `workspace:*`.
+# CI assembles the same layout the developer checkout uses:
+#
+#   workspace/
+#   ├── pnpm-workspace.yaml / package.json
+#   ├── menhir/                 (sibling repo; @limccn/menhir-core in menhir/ts)
+#   ├── longstone-ui/           (sibling repo; @limccn/longstone-surface)
+#   └── app/                    (this repo)
+#
+# Both checkouts need a token that can read the private sibling repos. Without
+# one, the fallback is the workflow token, which only works once those repos
+# grant it read access.
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout longstone-ext
+        uses: actions/checkout@v4
+        with:
+          path: workspace/app
+
+      - name: Checkout menhir (@limccn/menhir-core)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/menhir
+          token: ${{ secrets.WORKSPACE_REPO_TOKEN || secrets.MENHIR_REPO_TOKEN || github.token }}
+          path: workspace/menhir
+
+      - name: Checkout longstone-ui (@limccn/longstone-surface)
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone-ui
+          token: ${{ secrets.WORKSPACE_REPO_TOKEN || secrets.MENHIR_REPO_TOKEN || github.token }}
+          path: workspace/longstone-ui
+
+      - name: Assemble workspace
+        working-directory: workspace
+        run: |
+          # Only the packages this extension actually resolves are listed.
+          # menhir/contracts is absent: the extension consumes the TypeScript
+          # core, not the Solidity project.
+          printf 'packages:\n  - "app"\n  - "longstone-ui/packages/longstone-surface"\n  - "menhir/ts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
+          # No repo is checked out at the workspace root, so pnpm/action-setup
+          # needs a manifest here to read `packageManager`.
+          printf '{"name":"ci-workspace","private":true,"packageManager":"pnpm@12.11.2"}\n' > package.json
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: workspace/package.json
+
+      # No lockfile is committed in any of the three repos; caching is disabled
+      # because there is no pnpm-lock.yaml at the assembled workspace root.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install
+        working-directory: workspace
+        run: pnpm install --no-frozen-lockfile
+
+      # The surface package is consumed through its `dist` build, so it must be
+      # compiled (and have its own tests green) before the extension is tested.
+      - name: Build @limccn/menhir-core
+        working-directory: workspace
+        run: pnpm --filter @limccn/menhir-core build
+
+      - name: Test @limccn/menhir-core
+        working-directory: workspace
+        run: pnpm --filter @limccn/menhir-core test
+
+      - name: Build @limccn/longstone-surface
+        working-directory: workspace
+        run: pnpm --filter @limccn/longstone-surface build
+
+      - name: Test @limccn/longstone-surface
+        working-directory: workspace
+        run: pnpm --dir longstone-ui/packages/longstone-surface test
+
+      - name: Typecheck extension
+        working-directory: workspace
+        run: pnpm --dir app typecheck
+
+      # Build before test: the manifest tests assert the *generated* manifest
+      # (including side_panel, which WXT adds from the sidepanel entrypoint),
+      # not only the source config. The audit then re-checks both artifacts.
+      - name: Build chrome
+        working-directory: workspace
+        run: pnpm --dir app build:chrome
+
+      - name: Build edge
+        working-directory: workspace
+        run: pnpm --dir app build:edge
+
+      - name: Test extension (asserts built manifests)
+        working-directory: workspace
+        run: pnpm --dir app test
+
+      # The audit inspects `.output/{chrome,edge}-mv3`: manifest permissions,
+      # remote-code patterns, signing entry points, and 32-byte hex literals.
+      - name: Audit built bundle
+        working-directory: workspace
+        run: pnpm --dir app run audit
+
+      - name: Upload built extensions
+        uses: actions/upload-artifact@v4
+        with:
+          name: longstone-ext-mv3
+          path: |
+            workspace/app/.output/chrome-mv3
+            workspace/app/.output/edge-mv3
+          if-no-files-found: error
