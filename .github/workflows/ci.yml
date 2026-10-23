@@ -17,12 +17,10 @@ concurrency:
 #   workspace/
 #   ├── pnpm-workspace.yaml / package.json
 #   ├── menhir/                 (sibling repo; @limccn/menhir-core in menhir/ts)
-#   ├── longstone-ui/           (sibling repo; @limccn/longstone-surface)
+#   ├── longstone-surface/      (sibling repo; @limccn/longstone-surface)
 #   └── app/                    (this repo)
 #
-# Both checkouts need a token that can read the private sibling repos. Without
-# one, the fallback is the workflow token, which only works once those repos
-# grant it read access.
+# The sibling repos are public; the workflow token can read them.
 
 jobs:
   verify:
@@ -40,12 +38,12 @@ jobs:
           token: ${{ secrets.WORKSPACE_REPO_TOKEN || secrets.MENHIR_REPO_TOKEN || github.token }}
           path: workspace/menhir
 
-      - name: Checkout longstone-ui (@limccn/longstone-surface)
+      - name: Checkout longstone-surface (@limccn/longstone-surface)
         uses: actions/checkout@v4
         with:
-          repository: limccn/longstone-ui
-          token: ${{ secrets.WORKSPACE_REPO_TOKEN || secrets.MENHIR_REPO_TOKEN || github.token }}
-          path: workspace/longstone-ui
+          repository: limccn/longstone-surface
+          token: ${{ github.token }}
+          path: workspace/longstone-surface
 
       - name: Assemble workspace
         working-directory: workspace
@@ -53,7 +51,7 @@ jobs:
           # Only the packages this extension actually resolves are listed.
           # menhir/contracts is absent: the extension consumes the TypeScript
           # core, not the Solidity project.
-          printf 'packages:\n  - "app"\n  - "longstone-ui/packages/longstone-surface"\n  - "menhir/ts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
+          printf 'packages:\n  - "app"\n  - "longstone-surface"\n  - "menhir/ts"\nallowBuilds:\n  "esbuild": true\n' > pnpm-workspace.yaml
           # No repo is checked out at the workspace root, so pnpm/action-setup
           # needs a manifest here to read `packageManager`.
           printf '{"name":"ci-workspace","private":true,"packageManager":"pnpm@12.11.2"}\n' > package.json
@@ -88,7 +86,7 @@ jobs:
 
       - name: Test @limccn/longstone-surface
         working-directory: workspace
-        run: pnpm --dir longstone-ui/packages/longstone-surface test
+        run: pnpm --dir longstone-surface test
 
       - name: Typecheck extension
         working-directory: workspace
