@@ -206,7 +206,7 @@ registry invalidates the cached scan instead of merging it.
 ```bash
 # from the MemoryOverEth workspace root
 corepack pnpm install
-corepack pnpm --dir longstone-ui/packages/longstone-surface build   # dist is consumed
+corepack pnpm --dir longstone-surface build   # dist is consumed
 corepack pnpm --dir menhir/ts build                                 # menhir-core dist
 
 # from this directory
