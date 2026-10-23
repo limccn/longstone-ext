@@ -12,6 +12,7 @@ import {
   onWalletStorageChanged,
   walletStorage,
 } from '../../lib/chromeApi.js';
+import { createWriteGuard, type WriteGuard } from './writeGuard.js';
 import {
   DEFAULT_IDLE_TIMEOUT_MS,
   WalletError,
@@ -108,6 +109,22 @@ export function useVault(): VaultApi {
 
   const showNotice = useCallback((message: string) => setNotice(message), []);
   const dismissNotice = useCallback(() => setNotice(null), []);
+
+  // A resolved storage write is not proof it landed (design §4.2 step 7.c).
+  // Verification failures lock, reload, and surface a specific notice; every
+  // write path below stops adopting the in-memory result when it returns false.
+  const writeGuardRef = useRef<WriteGuard | null>(null);
+  if (writeGuardRef.current === null) {
+    writeGuardRef.current = createWriteGuard({
+      deps: VAULT_DEPS,
+      onUnverified: () => {
+        controllerRef.current?.lock('explicit');
+        void reload();
+        setNotice('Could not verify the save. Unlock again to reload.');
+      },
+    });
+  }
+  const writeGuard = writeGuardRef.current;
 
   function applyIdleSetting(payload: VaultPayload): void {
     const controller = controllerRef.current;
@@ -224,6 +241,9 @@ export function useVault(): VaultApi {
     const epoch = epochRef.current?.current() ?? 0;
     const result = await createVault(VAULT_DEPS, { password, account });
     if (!result.ok) return result;
+    if (!(await writeGuard.confirmRecordHash(result.value.recordHash))) {
+      return { ok: false, error: new WalletError('STORAGE_FAILED') };
+    }
     if (document.visibilityState === 'hidden') {
       // The record is written, but the panel is not visible: keep the key out
       // of memory and let the next open start from LOCKED.
@@ -275,13 +295,14 @@ export function useVault(): VaultApi {
   }
 
   /**
-   * Runs a vault mutation against the current key. A CONFLICT or vanished
-   * record means another window won; locking is safer than letting this page
-   * keep saving over it.
+   * Runs a vault mutation against the current key, then confirms its outcome
+   * on disk before adopting it. A CONFLICT or vanished record means another
+   * window won; an unconfirmed write locks instead of claiming success.
    */
   async function withVault<T>(
     operation: (current: UnlockedVault) => Promise<VaultResult<T>>,
     apply: (value: T) => void,
+    confirm: (value: T) => Promise<boolean>,
   ): Promise<VaultResult<T>> {
     const current = vaultRef.current;
     if (current === null) return { ok: false, error: new WalletError('LOCKED') };
@@ -292,6 +313,9 @@ export function useVault(): VaultApi {
         controllerRef.current?.lock('external-change');
       }
       return result;
+    }
+    if (!(await confirm(result.value))) {
+      return { ok: false, error: new WalletError('STORAGE_FAILED') };
     }
     if (epochRef.current?.isCurrent(epoch) !== true) {
       void reload();
@@ -305,6 +329,7 @@ export function useVault(): VaultApi {
     return withVault(
       (current) => addAccountOp(VAULT_DEPS, current, input),
       (value) => setVault(value),
+      (value) => writeGuard.confirmRecordHash(value.recordHash),
     );
   }
 
@@ -315,6 +340,7 @@ export function useVault(): VaultApi {
     return withVault(
       (current) => renameAccountOp(VAULT_DEPS, current, accountId, label),
       (value) => setVault(value),
+      (value) => writeGuard.confirmRecordHash(value.recordHash),
     );
   }
 
@@ -322,6 +348,7 @@ export function useVault(): VaultApi {
     return withVault(
       (current) => setActiveAccountOp(VAULT_DEPS, current, accountId),
       (value) => setVault(value),
+      (value) => writeGuard.confirmRecordHash(value.recordHash),
     );
   }
 
@@ -338,6 +365,10 @@ export function useVault(): VaultApi {
         controllerRef.current?.lock('explicit');
         setNotice('Wallet removed from this browser.');
       },
+      (outcome) =>
+        outcome.vault === null
+          ? writeGuard.confirmAbsent()
+          : writeGuard.confirmRecordHash(outcome.vault.recordHash),
     );
   }
 
@@ -349,6 +380,7 @@ export function useVault(): VaultApi {
         applyIdleSetting(value.payload);
         if (value.payload.idleTimeoutMs !== null) controllerRef.current?.touch();
       },
+      (value) => writeGuard.confirmRecordHash(value.recordHash),
     );
   }
 
@@ -367,6 +399,15 @@ export function useVault(): VaultApi {
       expectedRecordHash: current.recordHash,
     });
     if (result.ok) {
+      if (!(await writeGuard.confirmRecordHash(result.value.recordHash))) {
+        // The write may or may not have landed; never claim success. The new
+        // password is the one to try first after unlocking again.
+        return {
+          ok: false,
+          error: new WalletError('STORAGE_FAILED'),
+          resolution: 'try-new-password',
+        };
+      }
       if (epochRef.current?.isCurrent(epoch) === true) {
         setVault(result.value);
         epochRef.current?.bump();
@@ -400,6 +441,9 @@ export function useVault(): VaultApi {
     if (!result.ok) {
       void reload();
       return result;
+    }
+    if (!(await writeGuard.confirmAbsent())) {
+      return { ok: false, error: new WalletError('STORAGE_FAILED') };
     }
     setVault(null);
     setLoad({ kind: 'NO_VAULT' });

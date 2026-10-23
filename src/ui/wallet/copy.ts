@@ -46,8 +46,11 @@ export function walletErrorCopy(error: WalletError): string {
       return 'Enter a name of 1–64 characters.';
     case 'LOCKED':
       return 'Wallet is locked.';
+    // A rejected write and a failed post-write confirmation share this code
+    // (design §4.2 7.c), so never claim the wallet was unchanged: the record
+    // may have landed. The unlock notice carries the reload instruction.
     case 'STORAGE_FAILED':
-      return "Could not save to this browser's storage. Nothing was changed.";
+      return "Could not confirm the save to this browser's storage.";
     case 'VAULT_CORRUPT':
       return 'The saved wallet cannot be read. It was not modified.';
     case 'KDF_UNAVAILABLE':
