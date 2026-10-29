@@ -1,8 +1,10 @@
-# Privacy policy — longstone memory viewer (draft)
+# Privacy policy — longstone memory viewer
 
-Status: draft for Chrome Web Store and Microsoft Edge Add-ons submission.
-Effective date: TODO (set when the policy is published).
-Contact: [TODO: replace with the owner's support/security contact before publication]
+Status: final text for Chrome Web Store and Microsoft Edge Add-ons. The hosted
+copy must be published by the owner before submission.
+Effective date: `[OWNER: set the date when the policy is published]`.
+Contact: <https://github.com/limccn/longstone-ext/issues>.
+Hosted URL: `[OWNER: public URL of this policy]`.
 
 This policy covers the `longstone memory viewer` browser extension
 (`longstone-ext`, version 0.2.0). It is a MemoryOverEth viewer with a local,
@@ -105,6 +107,7 @@ an upload by the extension.
 
 ## Changes and contact
 
-This draft will be replaced by the posted policy at the store listing URL
-before publication. Questions or requests:
-[TODO: replace with the owner's support/security contact before publication].
+The hosted URL above is the authoritative copy of this policy once the owner
+publishes it. Material changes will be reflected there and in the extension's
+store listing metadata. Questions or requests:
+<https://github.com/limccn/longstone-ext/issues>.

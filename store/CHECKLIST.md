@@ -1,10 +1,10 @@
-# Store submission checklist — longstone memory viewer (draft)
+# Store submission checklist — longstone memory viewer
 
-Status: draft. **Submission is an owner action**: it requires the owner's
-Chrome Web Store developer account and Microsoft Partner Center/Edge Add-ons
-account, fees, identity verification, a hosted privacy-policy URL, final
-screenshots/assets, and the owner's approval of the published listing. Nothing
-in this repository has been submitted.
+Status: listing materials are ready for 0.2.0. Submission is still an owner
+action: it requires the owner's Chrome Web Store developer account and
+Microsoft Partner Center/Edge Add-ons account, fees, identity verification, a
+hosted privacy-policy URL, and the owner's approval of the published listing.
+Nothing in this repository has been submitted.
 
 Current package: `@limccn/longstone-ext` 0.2.0 (manifest and package versions
 match). Zips are produced as:
@@ -16,44 +16,63 @@ Version/tag: **0.2.0**; tag `v0.2.0` on the release commit. This version adds
 the encrypted local wallet to the 0.1.1 read/verify viewer. The wallet does not
 sign transactions.
 
-## Still TODO (assets and account material)
+## Completed for this submission
 
-- [ ] **Screenshots are still TODO.** At least one Chrome Web Store screenshot
-      at **1280x800** or **640x480**; add more showing timeline, detail, verify,
-      and the wallet (welcome, locked, and account list). Edge's Partner Center
-      may state its own image requirements; confirm there before upload.
-- [ ] **Store icon is still TODO: 128x128 PNG.** The manifest currently
-      declares no `icons`; add the packaged extension icons (16/32/48/128) and
-      the store icon as part of the release assets.
-- [ ] Optional promotional tiles: **440x280** (small), **920x680** (large),
-      **1400x560** (marquee).
-- [ ] **Hosted privacy-policy URL:** [TODO: replace with the public URL for
-      `store/PRIVACY.md`].
-- [ ] Support URL and contact email: [TODO: owner support URL/contact].
-- [ ] Owner developer accounts, registration fee, identity verification, and
-      store-console declarations.
-- [ ] Owner review of the listing copy in [LISTING.md](LISTING.md) and the
-      policy in [PRIVACY.md](PRIVACY.md).
-- [ ] Manual unpacked load in Chrome and Edge, plus a live Base Sepolia
-      timeline/verify check and the local wallet flow (not run in the automated
-      review environment).
-- [ ] Category/language final choice (suggested: Productivity, English).
+- [x] **Store icon:** `assets/icon-128.png` (128x128 PNG) with reusable source
+      `assets/icon-source.svg` and generator `scripts/render-store-icon.mjs`.
+      The manifest's packaged 16/32/48/128 icons remain unchanged and are
+      deferred to 0.2.1, so the 0.2.0 product artifact is untouched.
+- [x] **Screenshots:** five real 1280x800 captures from the 0.2.0 Chrome build:
+      `assets/screenshot-01-timeline.png` (timeline),
+      `assets/screenshot-02-verify.png` (verified verdict),
+      `assets/screenshot-03-wallet-welcome.png`,
+      `assets/screenshot-04-wallet-accounts.png`, and
+      `assets/screenshot-05-wallet-locked.png`.
+- [x] **Listing copy:** [LISTING.md](LISTING.md) is updated to 0.2.0, with the
+      single-purpose statement, permission justifications, data-use
+      disclosure, no-remote-code/no-telemetry statements, and the support URL
+      `https://github.com/limccn/longstone-ext/issues`.
+- [x] **Privacy policy:** [PRIVACY.md](PRIVACY.md) has final policy text and the
+      same support URL; only the owner's publication date and hosted URL remain.
+- [x] **Submission guide:** [SUBMISSION.md](SUBMISSION.md) records the owner
+      steps, prepared assets, pending URLs, and screenshot provenance.
+- [x] **Version boundary:** the 0.2.0 manifest, package, and built product were
+      not modified by this materials pass.
 
-Do not submit with placeholder text or missing screenshots.
+## Owner-only before submission
 
-## Chrome Web Store
+- [ ] Chrome Web Store developer account, registration fee, and identity
+      verification.
+- [ ] Microsoft Partner Center / Edge Add-ons account and any applicable fees.
+- [ ] Publish [PRIVACY.md](PRIVACY.md) at a public HTTPS URL and record it in
+      `[OWNER: hosted privacy-policy URL]` in LISTING, PRIVACY, and SUBMISSION.
+- [ ] Confirm the public support contact. The prepared value is
+      `https://github.com/limccn/longstone-ext/issues`; replace it if the owner
+      prefers a different channel.
+- [ ] Confirm the cairn icon (`assets/icon-128.png`) visually; replace the SVG
+      source and regenerate if the owner wants a different mark.
+- [ ] Confirm category (suggested: Productivity) and language (suggested:
+      English) in each store console.
+- [ ] Review and approve [LISTING.md](LISTING.md) and [PRIVACY.md](PRIVACY.md).
+- [ ] Load `.output/chrome-mv3` unpacked in Chrome and `.output/edge-mv3` in
+      Edge; run the live Base Sepolia timeline/verify check and the local wallet
+      flow listed below. This is a manual unpacked check, not an automated
+      substitute.
+- [ ] Upload the final zip, assets, and copy; submit for review in each store.
+      These steps are owner actions and are not performed by the repository.
+
+## Chrome Web Store (owner)
 
 - [ ] Sign in with the owner's developer account; pay the registration fee if
       required.
-- [ ] Upload the Chrome zip from `pnpm zip` (see the pre-submission commands
-      below).
+- [ ] Upload the Chrome zip produced by `pnpm zip`.
 - [ ] Store listing: name `longstone memory viewer`, short description, long
       description, category, language (copy in [LISTING.md](LISTING.md)).
-- [ ] Graphics: 128x128 store icon, screenshots, optional tiles (all TODO
-      above).
+- [ ] Graphics: `assets/icon-128.png`, the five 1280x800 screenshots, and any
+      optional promotional tiles the owner chooses to produce.
 - [ ] Single-purpose statement:
-      "provide a local signing identity for the MemoryOverEth memory browser".
-- [ ] Privacy policy URL (TODO) and support/contact URL (TODO).
+      "Provide a MemoryOverEth memory browser with a local, encrypted wallet."
+- [ ] Privacy policy URL and support URL from the owner-only list above.
 - [ ] Privacy practices: declare **no data collection or sale**; local
       settings/cache and encrypted wallet only; justify `sidePanel`, `storage`,
       and the optional host permissions as user-configured endpoints; declare
@@ -70,38 +89,25 @@ Do not submit with placeholder text or missing screenshots.
       the inlined Argon2id); deep links open the web app for wallet writes.
 - [ ] Submit for review (owner action).
 
-## Microsoft Edge Add-ons
+## Microsoft Edge Add-ons (owner)
 
 - [ ] Sign in to Partner Center with the owner's account; create the extension
       submission.
-- [ ] Upload the Edge zip from `pnpm zip` (same MV3 package as Chrome).
-- [ ] Listing copy, privacy-policy URL, support contact, and screenshots
-      (same TODO assets above; confirm Partner Center's current sizes).
+- [ ] Upload the Edge zip produced by `pnpm zip` (same MV3 package as Chrome).
+- [ ] Listing copy, privacy-policy URL, support contact, and the same five
+      screenshots; confirm Partner Center's current image requirements.
 - [ ] Complete the Partner Center metadata/permission disclosures; state that
       host access is optional and user-scoped, and that the wallet is local-only
       and does not sign.
 - [ ] Allow for Edge certification time (the plan quotes up to 7 business days).
 - [ ] Submit for review (owner action).
 
-## Pre-submission verification
+## Manual unpacked check (owner)
 
-Run from the workspace root (`d:/Workspace/MemoryOverEth`):
+Run in a normal Chrome/Edge window with the unpacked build:
 
-- [ ] `corepack pnpm --dir longstone-ext typecheck`
-- [ ] `corepack pnpm --dir longstone-ext test`
-- [ ] `corepack pnpm --dir longstone-ext build`
-- [ ] `node longstone-ext/scripts/audit-extension.mjs`
-- [ ] `corepack pnpm --dir longstone-ext e2e`
-- [ ] `corepack pnpm --dir longstone-ext zip`
-- [ ] Inspect `.output/chrome-mv3/manifest.json` and
-      `.output/edge-mv3/manifest.json`: `permissions` exactly
-      `["sidePanel","storage"]`; `optional_host_permissions` only the HTTPS
-      ceiling plus loopback; no required `host_permissions`; no `tabs`,
-      `activeTab`, `scripting`, content scripts, or `web_accessible_resources`;
-      `side_panel.default_path` and `options_ui.page` point at shipped files;
-      CSP is `script-src 'self' 'wasm-unsafe-eval'; object-src 'self'`.
-- [ ] Load `.output/chrome-mv3` unpacked in Chrome and `.output/edge-mv3` in
-      Edge; save settings and approve the single host-access prompt.
+- [ ] Load `.output/chrome-mv3` in Chrome and `.output/edge-mv3` in Edge; save
+      settings and approve the single host-access prompt.
 - [ ] Paste an owner with known Base Sepolia commitments; confirm timeline,
       detail, and both digest checks in Verify.
 - [ ] Create a throwaway wallet; confirm the 4-word phrase check, lock/unlock,
@@ -114,5 +120,39 @@ Run from the workspace root (`d:/Workspace/MemoryOverEth`):
 - [ ] Click Retract, Signers, and Verify deep links; confirm they open the web
       app for the write action and that the extension itself never signs or
       submits a transaction.
-- [ ] Confirm no remote code, no signing entry point, and no key material in
-      the built output.
+
+## Pre-submission verification (release engineer)
+
+Run from the workspace root (`d:/Workspace/MemoryOverEth`). These are gates
+before an upload, not AI-filled submission items:
+
+```powershell
+corepack pnpm --dir longstone-ext typecheck
+corepack pnpm --dir longstone-ext test
+corepack pnpm --dir longstone-ext build
+node longstone-ext/scripts/audit-extension.mjs
+corepack pnpm --dir longstone-ext e2e
+corepack pnpm --dir longstone-ext zip
+```
+
+Then inspect `.output/chrome-mv3/manifest.json` and
+`.output/edge-mv3/manifest.json`:
+
+- `permissions` exactly `["sidePanel","storage"]`;
+- `optional_host_permissions` only the HTTPS ceiling plus loopback;
+- no required `host_permissions`, `tabs`, `activeTab`, `scripting`, content
+  scripts, or `web_accessible_resources`;
+- `side_panel.default_path` and `options_ui.page` point at shipped files;
+- CSP is `script-src 'self' 'wasm-unsafe-eval'; object-src 'self'`;
+- no remote code, signing entry point, or key material in the built output.
+
+To regenerate the screenshots after a rebuild, with the local chain fixture
+running:
+
+```powershell
+corepack pnpm --dir longstone-ext e2e
+$env:STORE_SCREENSHOTS = "1"
+corepack pnpm --dir longstone-ext exec playwright test -c playwright.extension.config.ts test/e2e/store-screenshots.spec.ts
+```
+
+Do not submit with placeholder text or missing screenshots.

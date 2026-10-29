@@ -1,13 +1,14 @@
-# Store listing copy — longstone memory viewer (draft)
+# Store listing copy — longstone memory viewer
 
-Status: draft for Chrome Web Store and Microsoft Edge Add-ons. Not submitted.
-Version: 0.2.0 (release tag `v0.2.0` when published; see
-[CHECKLIST.md](CHECKLIST.md)).
-Privacy policy: [PRIVACY.md](PRIVACY.md) (hosted URL still TODO).
+Status: submission-ready copy for Chrome Web Store and Microsoft Edge Add-ons.
+Version: 0.2.0 (release tag `v0.2.0`). Not submitted.
+Privacy policy: [PRIVACY.md](PRIVACY.md). The public URL is owner-only:
+`[OWNER: hosted privacy-policy URL]`.
+Support: <https://github.com/limccn/longstone-ext/issues>.
 
 ## Single-purpose statement
 
-provide a local signing identity for the MemoryOverEth memory browser
+Provide a MemoryOverEth memory browser with a local, encrypted wallet.
 
 ## Short description
 
@@ -64,8 +65,9 @@ off-allowlist key material.
 
 Testnet only: Base Sepolia is a test chain; treat everything as throwaway.
 
-Support/contact: [TODO: replace with the owner's support/security contact
-before publication].
+Support/contact: <https://github.com/limccn/longstone-ext/issues>. Security
+reports can use the same issue tracker; do not include secrets or recovery
+phrases in a public issue.
 
 ## Permission justifications
 
@@ -103,6 +105,11 @@ You can revoke access from the browser's extension details page.
 
 - Category: Productivity (owner to confirm in the store console).
 - Language: English.
+- Store icon: `assets/icon-128.png` (128x128 PNG; source
+  `assets/icon-source.svg`).
+- Screenshots: `assets/screenshot-01-timeline.png` through
+  `assets/screenshot-05-wallet-locked.png` (1280x800; see
+  [SUBMISSION.md](SUBMISSION.md) for provenance).
 - Test instructions for reviewers: load the unpacked build, leave the default
   Base Sepolia endpoints or set your own, save (approve the one host-access
   prompt for those origins), then paste an owner address that has commitments.
