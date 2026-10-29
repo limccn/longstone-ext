@@ -145,6 +145,6 @@ describe('panel wiring never requests permissions itself', () => {
     // Opening a new tab does not require host access. Only a settings save
     // calls permissions.request; no other module imports the API.
     const { webAppOrigin } = await import('../src/lib/deepLinks.js');
-    expect(webAppOrigin()).toBe('https://longstone-ui.pages.dev');
+    expect(webAppOrigin()).toBe('https://longstone.app');
   });
 });

@@ -3,8 +3,8 @@
 Status: final text for Chrome Web Store and Microsoft Edge Add-ons. The hosted
 copy must be published by the owner before submission.
 Effective date: `[OWNER: set the date when the policy is published]`.
-Contact: <https://github.com/limccn/longstone-ext/issues>.
-Hosted URL: `[OWNER: public URL of this policy]`.
+Contact: <support@longstone.app>.
+Hosted URL: `https://longstone.app/privacy`.
 
 This policy covers the `longstone memory viewer` browser extension
 (`longstone-ext`, version 0.2.0). It is a MemoryOverEth viewer with a local,
@@ -44,7 +44,8 @@ Network requests go only to:
 
 - the RPC, IPFS gateway, and hisaishi endpoints configured in Settings
   (including defaults left in place);
-- `https://longstone-ui.pages.dev` when you click a deep link to the web app;
+- `https://longstone.app` when you click a deep link to the web app (the same
+  build is also served at `https://longstone-ui.pages.dev` for older links);
 - `https://base-sepolia.blockscout.com` when you click a transaction or
   contract link.
 
@@ -95,9 +96,9 @@ page. Denying it leaves the setting saved, but the endpoint may be unreadable.
 
 The wallet creates or imports a Base Sepolia identity locally. It does not
 sign transactions in this release and does not connect to a wallet provider.
-Retract, ACL/signers, and verify buttons open `https://longstone-ui.pages.dev`;
-that web app is a separate site with its own privacy policy, and any wallet
-interaction there is performed by you.
+Retract, ACL/signers, and verify buttons open `https://longstone.app`; that web
+app is a separate site with its own privacy policy, and any wallet interaction
+there is performed by you.
 
 Exporting a private key or recovery phrase requires re-entering the wallet
 password and an explicit reveal. The secret remains visible for at most 60
@@ -109,5 +110,5 @@ an upload by the extension.
 
 The hosted URL above is the authoritative copy of this policy once the owner
 publishes it. Material changes will be reflected there and in the extension's
-store listing metadata. Questions or requests:
-<https://github.com/limccn/longstone-ext/issues>.
+store listing metadata. Questions or requests: <support@longstone.app>
+(developer issues: <https://github.com/limccn/longstone-ext/issues>).

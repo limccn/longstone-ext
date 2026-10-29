@@ -16,7 +16,7 @@
  */
 
 /** Fixed base — the deployed web app. Not configurable on purpose. */
-export const WEB_APP_BASE = 'https://longstone-ui.pages.dev' as const;
+export const WEB_APP_BASE = 'https://longstone.app' as const;
 
 const HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
@@ -41,9 +41,12 @@ export function commitmentUrl(commitmentHash: string): string | null {
   return `${WEB_APP_BASE}/commitment/${encodeURIComponent(commitmentHash)}`;
 }
 
-/** Timeline in the web app. No dynamic input, so nothing to validate. */
+/**
+ * Workspaces (the timeline view) in the web app. No dynamic input, so nothing
+ * to validate.
+ */
 export function timelineUrl(): string {
-  return build('/');
+  return build('/workspaces');
 }
 
 /**

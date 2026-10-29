@@ -27,7 +27,7 @@ use there, under a password only you know.
 | **Wallet tab** | Create or import a Base Sepolia account, unlock the encrypted vault, add/rename/delete accounts, export a key or phrase after re-entering the password, change the password, reset the vault. |
 | **Options page** | RPC, registry, IPFS gateway, hisaishi URL, default owner, scan chunk/start. Stored in `chrome.storage.local`. |
 | **Toolbar button** | Opens the side panel. |
-| **Deep links** | "Retract", "Manage signers", "Detail" and "Verify" buttons open `https://longstone-ui.pages.dev` in a new tab. |
+| **Deep links** | "Retract", "Manage signers", "Detail" and "Verify" buttons open `https://longstone.app` in a new tab (`https://longstone-ui.pages.dev` serves the same build for older links). |
 
 ### Verification is chain-first
 
@@ -162,8 +162,10 @@ locally; the vault is local-only.
 Write actions happen in the web app, where the user's wallet is. Links are
 built in `src/lib/deepLinks.ts` under three rules (security review PS-8):
 
-1. The base URL is a **fixed constant** — `https://longstone-ui.pages.dev`.
-   No caller can supply a different host.
+1. The base URL is a **fixed constant** — `https://longstone.app`.
+   No caller can supply a different host. (The app is also served at
+   `https://longstone-ui.pages.dev` for older links, but new links target the
+   custom domain.)
 2. The only dynamic path segment is a commitment hash, validated as
    `0x` + exactly 64 hex characters **before** the URL is built. An invalid
    value returns `null`, and the button is not rendered.

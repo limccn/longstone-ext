@@ -55,8 +55,9 @@ Use [PRIVACY.md](PRIVACY.md) for the privacy-policy text.
   local, encrypted wallet."
 - Category: Productivity (owner to confirm).
 - Language: English (owner to confirm).
-- Support: <https://github.com/limccn/longstone-ext/issues>.
-- Privacy policy public URL: `[OWNER: hosted privacy-policy URL]`.
+- Support: <support@longstone.app> (developer issues:
+  <https://github.com/limccn/longstone-ext/issues>).
+- Privacy policy public URL: `https://longstone.app/privacy`.
 - Privacy policy effective date: `[OWNER: publication date]`.
 
 ## Chrome Web Store — owner steps
@@ -96,9 +97,9 @@ Use [PRIVACY.md](PRIVACY.md) for the privacy-policy text.
 
 | Field | Current value | Owner action |
 |---|---|---|
-| Hosted privacy-policy URL | `[OWNER: hosted privacy-policy URL]` | Publish `PRIVACY.md` and paste the public HTTPS URL into LISTING, PRIVACY, and this guide |
+| Hosted privacy-policy URL | `https://longstone.app/privacy` | Confirm the `/privacy` route is live on `longstone.app` and covers the policy text in `PRIVACY.md` |
 | Privacy-policy effective date | `[OWNER: publication date]` | Set the date the hosted policy goes live |
-| Support contact | `https://github.com/limccn/longstone-ext/issues` | Confirm or replace with the owner's preferred support channel |
+| Support contact | `support@longstone.app` (developer issues: `https://github.com/limccn/longstone-ext/issues`) | Confirm the mailbox forwards to the owner (Cloudflare Email Routing) |
 | Icon visual | cairn mark in `assets/icon-128.png` | Confirm the mark; edit `icon-source.svg` and rerun `scripts/render-store-icon.mjs` if it should change |
 | Developer accounts / fees | none | Register and pay in each store |
 | Category / language | Productivity / English | Confirm in each console |

@@ -30,10 +30,13 @@ sign transactions.
       `assets/screenshot-05-wallet-locked.png`.
 - [x] **Listing copy:** [LISTING.md](LISTING.md) is updated to 0.2.0, with the
       single-purpose statement, permission justifications, data-use
-      disclosure, no-remote-code/no-telemetry statements, and the support URL
-      `https://github.com/limccn/longstone-ext/issues`.
-- [x] **Privacy policy:** [PRIVACY.md](PRIVACY.md) has final policy text and the
-      same support URL; only the owner's publication date and hosted URL remain.
+      disclosure, no-remote-code/no-telemetry statements, and the support
+      contact `support@longstone.app` (developer issues:
+      `https://github.com/limccn/longstone-ext/issues`).
+- [x] **Privacy policy:** [PRIVACY.md](PRIVACY.md) has final policy text, the
+      same support contact, and the hosted URL
+      `https://longstone.app/privacy`; only the owner's publication date and
+      the live-page check remain.
 - [x] **Submission guide:** [SUBMISSION.md](SUBMISSION.md) records the owner
       steps, prepared assets, pending URLs, and screenshot provenance.
 - [x] **Version boundary:** the 0.2.0 manifest, package, and built product were
@@ -44,11 +47,14 @@ sign transactions.
 - [ ] Chrome Web Store developer account, registration fee, and identity
       verification.
 - [ ] Microsoft Partner Center / Edge Add-ons account and any applicable fees.
-- [ ] Publish [PRIVACY.md](PRIVACY.md) at a public HTTPS URL and record it in
-      `[OWNER: hosted privacy-policy URL]` in LISTING, PRIVACY, and SUBMISSION.
-- [ ] Confirm the public support contact. The prepared value is
-      `https://github.com/limccn/longstone-ext/issues`; replace it if the owner
-      prefers a different channel.
+- [ ] Confirm the privacy policy is live at
+      `https://longstone.app/privacy` (the URL recorded in LISTING, PRIVACY,
+      and SUBMISSION) and that the page covers the text in
+      [PRIVACY.md](PRIVACY.md); the web app's `PrivacyView` keeps a "Browser
+      extension (longstone memory viewer)" section for exactly that.
+- [ ] Confirm `support@longstone.app` forwards to the owner's mailbox (set up
+      with Cloudflare Email Routing); GitHub Issues remains the developer
+      channel.
 - [ ] Confirm the cairn icon (`assets/icon-128.png`) visually; replace the SVG
       source and regenerate if the owner wants a different mark.
 - [ ] Confirm category (suggested: Productivity) and language (suggested:

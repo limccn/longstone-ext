@@ -81,8 +81,16 @@ describe('verifyUrl', () => {
 
 describe('fixed routes', () => {
   it('never interpolates user input', () => {
-    expect(timelineUrl()).toBe(`${WEB_APP_BASE}/`);
+    expect(timelineUrl()).toBe(`${WEB_APP_BASE}/workspaces`);
     expect(aclUrl()).toBe(`${WEB_APP_BASE}/acl`);
+  });
+
+  it('points the timeline at the workspaces route, not the landing page', () => {
+    const url = new URL(timelineUrl());
+    expect(url.pathname).toBe('/workspaces');
+    expect(url.search).toBe('');
+    expect(url.hash).toBe('');
+    expect(url.origin).toBe(webAppOrigin());
   });
 });
 

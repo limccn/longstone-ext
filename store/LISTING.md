@@ -2,9 +2,10 @@
 
 Status: submission-ready copy for Chrome Web Store and Microsoft Edge Add-ons.
 Version: 0.2.0 (release tag `v0.2.0`). Not submitted.
-Privacy policy: [PRIVACY.md](PRIVACY.md). The public URL is owner-only:
-`[OWNER: hosted privacy-policy URL]`.
-Support: <https://github.com/limccn/longstone-ext/issues>.
+Privacy policy: [PRIVACY.md](PRIVACY.md), published at
+`https://longstone.app/privacy`.
+Support: <support@longstone.app>. Developer issues:
+<https://github.com/limccn/longstone-ext/issues>.
 
 ## Single-purpose statement
 
@@ -50,7 +51,8 @@ need a backup.
 
 This release does **not sign transactions**. The wallet is a local identity
 vault; retract and access-control/signers actions still open
-`https://longstone-ui.pages.dev` in a new tab, where your wallet signs. The
+`https://longstone.app` in a new tab, where your wallet signs. The same web app
+is also served at `https://longstone-ui.pages.dev` for older links. The
 extension does not connect a wallet provider, expose `window.ethereum`, or send
 transactions.
 
@@ -65,9 +67,9 @@ off-allowlist key material.
 
 Testnet only: Base Sepolia is a test chain; treat everything as throwaway.
 
-Support/contact: <https://github.com/limccn/longstone-ext/issues>. Security
-reports can use the same issue tracker; do not include secrets or recovery
-phrases in a public issue.
+Support/contact: <support@longstone.app>. Developer issues:
+<https://github.com/limccn/longstone-ext/issues>. Security reports can use the
+issue tracker; do not include secrets or recovery phrases in a public issue.
 
 ## Permission justifications
 
