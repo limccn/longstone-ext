@@ -57,6 +57,15 @@ jobs:
           token: ${{ github.token }}
           path: workspace/longstone-wallet
 
+      # Outside `workspace/` so the ledger repository is not assembled as a
+      # workspace project.
+      - name: Checkout longstone lockfile ledger
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone
+          token: ${{ github.token }}
+          path: ci
+
       - name: Assemble workspace
         working-directory: workspace
         run: |
@@ -72,17 +81,18 @@ jobs:
         with:
           package_json_file: workspace/package.json
 
-      # No lockfile exists at the assembled workspace root; caching is disabled
-      # (longstone-wallet's lockfile is nested and is not a root cache key).
+      # The ledger is copied after this step, so setup-node has no lockfile to
+      # key a cache on; caching stays disabled.
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Install
+      - name: Install from reviewed lockfile
         working-directory: workspace
-        # L-6 exception: assembled workspace cannot use a frozen lockfile.
-        # See https://github.com/limccn/longstone/blob/main/docs/supply-chain.md
-        run: pnpm install --no-frozen-lockfile
+        # Ledger: ci/ci/lockfiles/longstone-ext-ci-verify.yaml. There is no non-frozen fallback.
+        run: |
+          cp ../ci/ci/lockfiles/longstone-ext-ci-verify.yaml pnpm-lock.yaml
+          pnpm install --frozen-lockfile
 
       # The surface package is consumed through its `dist` build, so it must be
       # compiled (and have its own tests green) before the extension is tested.
@@ -181,6 +191,15 @@ jobs:
           token: ${{ github.token }}
           path: workspace/longstone-wallet
 
+      # Outside `workspace/` so the ledger repository is not assembled as a
+      # workspace project.
+      - name: Checkout longstone lockfile ledger
+        uses: actions/checkout@v4
+        with:
+          repository: limccn/longstone
+          token: ${{ github.token }}
+          path: ci
+
       - name: Assemble workspace
         working-directory: workspace
         run: |
@@ -197,11 +216,12 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install
+      - name: Install from reviewed lockfile
         working-directory: workspace
-        # L-6 exception: assembled workspace cannot use a frozen lockfile.
-        # See https://github.com/limccn/longstone/blob/main/docs/supply-chain.md
-        run: pnpm install --no-frozen-lockfile
+        # Ledger: ci/ci/lockfiles/longstone-ext-ci-e2e.yaml. There is no non-frozen fallback.
+        run: |
+          cp ../ci/ci/lockfiles/longstone-ext-ci-e2e.yaml pnpm-lock.yaml
+          pnpm install --frozen-lockfile
 
       - name: Build @limccn/menhir-core
         working-directory: workspace
